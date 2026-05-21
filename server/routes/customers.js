@@ -1,7 +1,7 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const { getDb } = require('../db');
+const { getDb, DATA_DIR } = require('../db');
 
 const router = express.Router();
 
@@ -100,7 +100,7 @@ router.delete('/:id', (req, res) => {
   const existing = db.prepare('SELECT * FROM customers WHERE id = ?').get(req.params.id);
   if (!existing) return res.status(404).json({ error: '客户不存在' });
 
-  const uploadDir = path.join(__dirname, '..', 'uploads', String(req.params.id));
+  const uploadDir = path.join(DATA_DIR, 'uploads', String(req.params.id));
   try { fs.rmSync(uploadDir, { recursive: true, force: true }); } catch (e) { /* ignore */ }
 
   db.prepare('DELETE FROM customers WHERE id = ?').run(req.params.id);

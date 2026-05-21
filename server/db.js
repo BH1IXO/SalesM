@@ -2,7 +2,8 @@ const Database = require('better-sqlite3');
 const fs = require('fs');
 const path = require('path');
 
-const DB_PATH = path.join(__dirname, '..', 'salesm.db');
+const DATA_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || path.join(__dirname, '..');
+const DB_PATH = path.join(DATA_DIR, 'salesm.db');
 
 let db;
 
@@ -18,4 +19,4 @@ function getDb() {
   return db;
 }
 
-module.exports = { getDb };
+module.exports = { getDb, DATA_DIR };

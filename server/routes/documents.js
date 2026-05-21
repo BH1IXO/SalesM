@@ -3,9 +3,9 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
-const { getDb } = require('../db');
+const { getDb, DATA_DIR } = require('../db');
 
-const UPLOAD_BASE = path.join(__dirname, '..', 'uploads');
+const UPLOAD_BASE = path.join(DATA_DIR, 'uploads');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
