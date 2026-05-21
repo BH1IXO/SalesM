@@ -29,8 +29,8 @@ router.get('/pipeline', (req, res) => {
     FROM customers GROUP BY status ORDER BY
       CASE status
         WHEN 'leads' THEN 1 WHEN 'contact' THEN 2 WHEN 'needs' THEN 3
-        WHEN 'followup' THEN 4 WHEN 'proposal' THEN 5 WHEN 'negotiation' THEN 6
-        WHEN 'contract' THEN 7 WHEN 'won' THEN 8 WHEN 'lost' THEN 9
+        WHEN 'proposal' THEN 4 WHEN 'negotiation' THEN 5
+        WHEN 'contract' THEN 6 WHEN 'won' THEN 7 WHEN 'lost' THEN 8
       END
   `).all();
   res.json(stages);

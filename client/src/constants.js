@@ -2,7 +2,6 @@ export const PIPELINE_STAGES = [
   { id: 'leads', name: '线索', color: 'bg-slate-100 dark:bg-slate-800', textColor: 'text-slate-600 dark:text-slate-300', dotColor: 'bg-slate-400' },
   { id: 'contact', name: '初步接触', color: 'bg-sky-50 dark:bg-sky-900/30', textColor: 'text-sky-600 dark:text-sky-300', dotColor: 'bg-sky-400' },
   { id: 'needs', name: '需求确认', color: 'bg-blue-50 dark:bg-blue-900/30', textColor: 'text-blue-600 dark:text-blue-300', dotColor: 'bg-blue-400' },
-  { id: 'followup', name: '跟单跟进', color: 'bg-indigo-50 dark:bg-indigo-900/30', textColor: 'text-indigo-600 dark:text-indigo-300', dotColor: 'bg-indigo-400' },
   { id: 'proposal', name: '方案提交', color: 'bg-violet-50 dark:bg-violet-900/30', textColor: 'text-violet-600 dark:text-violet-300', dotColor: 'bg-violet-400' },
   { id: 'negotiation', name: '打单谈判', color: 'bg-amber-50 dark:bg-amber-900/30', textColor: 'text-amber-600 dark:text-amber-300', dotColor: 'bg-amber-400' },
   { id: 'contract', name: '合同签署', color: 'bg-orange-50 dark:bg-orange-900/30', textColor: 'text-orange-600 dark:text-orange-300', dotColor: 'bg-orange-400' },

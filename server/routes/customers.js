@@ -86,7 +86,7 @@ router.patch('/:id/status', (req, res) => {
   const now = new Date().toISOString().split('T')[0];
   db.prepare('UPDATE customers SET status = ?, updated_at = ? WHERE id = ?').run(status, now, req.params.id);
 
-  const STAGE_NAMES = { leads: '线索', contact: '初步接触', needs: '需求确认', followup: '跟单跟进', proposal: '方案提交', negotiation: '打单谈判', contract: '合同签署', won: '赢单', lost: '输单' };
+  const STAGE_NAMES = { leads: '线索', contact: '初步接触', needs: '需求确认', proposal: '方案提交', negotiation: '打单谈判', contract: '合同签署', won: '赢单', lost: '输单' };
   db.prepare('INSERT INTO activities (customer_id, type, description, date, created_by) VALUES (?, ?, ?, ?, ?)').run(
     req.params.id, 'call', `状态变更为：${STAGE_NAMES[status] || status}`, now, req.user.id
   );
