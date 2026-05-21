@@ -118,3 +118,11 @@ CREATE TABLE IF NOT EXISTS customer_collaborators (
 );
 
 CREATE INDEX IF NOT EXISTS idx_collaborators_customer ON customer_collaborators(customer_id);
+
+CREATE TABLE IF NOT EXISTS account_applications (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT NOT NULL,
+  name TEXT NOT NULL,
+  status TEXT DEFAULT 'pending',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);

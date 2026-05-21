@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AuthProvider, useAuth, StoreProvider, useStore } from './store';
+import { submitApplication } from './api';
 import PipelinePage from './components/PipelinePage';
 import CustomersPage from './components/CustomersPage';
 import ReportsPage from './components/ReportsPage';
@@ -14,9 +15,148 @@ const ROLE_LABELS = {
   product: '产品', dev: '研发', ops: '运营', partner: '合作伙伴',
 };
 
+// ─── Landing Page ──────────────────────────────────────────────────────────
+
+function LandingPage({ onLogin, onRegister }) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 px-4">
+      <div className="text-center fade-in">
+        <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-blue-600 text-white text-3xl font-bold mb-6">
+          Z7
+        </div>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Zen7 Labs</h1>
+        <p className="text-lg text-gray-600 dark:text-gray-400 mb-10">销售管理系统</p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <button
+            onClick={onLogin}
+            className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-base"
+          >
+            登录
+          </button>
+          <button
+            onClick={onRegister}
+            className="px-8 py-3 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-medium rounded-lg border border-gray-300 dark:border-gray-600 transition focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-base"
+          >
+            申请账号
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Register Page ─────────────────────────────────────────────────────────
+
+function RegisterPage({ onBack }) {
+  const [username, setUsername] = useState('');
+  const [name, setName] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      await submitApplication(username, name);
+      setSuccess(true);
+    } catch (err) {
+      setError(err.response?.data?.error || '提交失败，请重试');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 px-4">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 w-full max-w-md fade-in">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-600 text-white text-2xl font-bold mb-4">
+            Z7
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">申请账号</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">填写信息后等待管理员审批</p>
+        </div>
+
+        {success ? (
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 mb-4">
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <p className="text-gray-700 dark:text-gray-300 mb-6">申请已提交，请等待管理员审批</p>
+            <button
+              onClick={onBack}
+              className="text-blue-600 dark:text-blue-400 hover:underline text-sm"
+            >
+              返回首页
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {error && (
+              <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                用户名 (ID)
+              </label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                placeholder="请输入用户名"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                姓名
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                placeholder="请输入姓名"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg transition focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              {loading ? '提交中...' : '提交申请'}
+            </button>
+
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={onBack}
+                className="text-blue-600 dark:text-blue-400 hover:underline text-sm"
+              >
+                返回首页
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Login Page ─────────────────────────────────────────────────────────────
 
-function LoginPage() {
+function LoginPage({ onBack }) {
   const { login } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -41,10 +181,10 @@ function LoginPage() {
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 w-full max-w-md fade-in">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-600 text-white text-2xl font-bold mb-4">
-            S
+            Z7
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">SalesM</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">销售管理平台</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Zen7 Labs</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">销售管理系统</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -89,6 +229,16 @@ function LoginPage() {
           >
             {loading ? '登录中...' : '登录'}
           </button>
+
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={onBack}
+              className="text-blue-600 dark:text-blue-400 hover:underline text-sm"
+            >
+              返回首页
+            </button>
+          </div>
         </form>
       </div>
     </div>
@@ -288,6 +438,7 @@ function Layout() {
 
 function AppContent() {
   const { isAuthenticated, loading, mustChangePassword, passwordChanged } = useAuth();
+  const [publicPage, setPublicPage] = useState('landing');
 
   if (loading) {
     return (
@@ -301,7 +452,13 @@ function AppContent() {
   }
 
   if (!isAuthenticated) {
-    return <LoginPage />;
+    if (publicPage === 'login') {
+      return <LoginPage onBack={() => setPublicPage('landing')} />;
+    }
+    if (publicPage === 'register') {
+      return <RegisterPage onBack={() => setPublicPage('landing')} />;
+    }
+    return <LandingPage onLogin={() => setPublicPage('login')} onRegister={() => setPublicPage('register')} />;
   }
 
   return (

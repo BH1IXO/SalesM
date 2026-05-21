@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getUsers, createUser, updateUser, resetUserPassword } from '../api';
+import { getUsers, createUser, updateUser, resetUserPassword, getApplications, approveApplication, rejectApplication } from '../api';
 import Modal from './Modal';
 
 const ROLE_OPTIONS = [
@@ -182,6 +182,7 @@ export default function AdminPage() {
   const [users, setUsers] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
   const [resetTarget, setResetTarget] = useState(null);
+  const [applications, setApplications] = useState([]);
 
   const loadUsers = useCallback(async () => {
     try {
@@ -192,12 +193,41 @@ export default function AdminPage() {
     }
   }, []);
 
-  useEffect(() => { loadUsers(); }, [loadUsers]);
+  const loadApplications = useCallback(async () => {
+    try {
+      const data = await getApplications();
+      setApplications(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Failed to load applications:', err);
+    }
+  }, []);
+
+  useEffect(() => { loadUsers(); loadApplications(); }, [loadUsers, loadApplications]);
 
   const handleToggleActive = async (user) => {
     try {
       await updateUser(user.id, { active: user.active ? 0 : 1 });
       loadUsers();
+    } catch (err) {
+      alert(err.response?.data?.error || '操作失败');
+    }
+  };
+
+  const handleApprove = async (app) => {
+    try {
+      const res = await approveApplication(app.id);
+      alert(res.message || '已通过');
+      loadApplications();
+      loadUsers();
+    } catch (err) {
+      alert(err.response?.data?.error || '操作失败');
+    }
+  };
+
+  const handleReject = async (app) => {
+    try {
+      await rejectApplication(app.id);
+      loadApplications();
     } catch (err) {
       alert(err.response?.data?.error || '操作失败');
     }
@@ -220,6 +250,40 @@ export default function AdminPage() {
           新建用户
         </button>
       </div>
+
+      {/* Applications Section */}
+      {applications.length > 0 && (
+        <div className="mb-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
+          <h2 className="text-sm font-semibold text-amber-800 dark:text-amber-300 mb-3">
+            待审批账号申请 ({applications.length})
+          </h2>
+          <div className="space-y-2">
+            {applications.map((app) => (
+              <div key={app.id} className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-lg px-4 py-3 border border-amber-100 dark:border-gray-700">
+                <div>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">{app.name}</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">({app.username})</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500 ml-3">{(app.created_at || '').split(' ')[0]}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleApprove(app)}
+                    className="px-3 py-1 text-xs font-medium bg-green-600 hover:bg-green-700 text-white rounded-lg transition"
+                  >
+                    通过
+                  </button>
+                  <button
+                    onClick={() => handleReject(app)}
+                    className="px-3 py-1 text-xs font-medium bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-400 rounded-lg transition"
+                  >
+                    拒绝
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <table className="w-full">

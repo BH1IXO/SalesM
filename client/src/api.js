@@ -234,3 +234,24 @@ export const resetUserPassword = async (id, password) => {
   const { data } = await api.post(`/admin/users/${id}/reset-password`, { password });
   return data;
 };
+
+// Account Applications
+export const submitApplication = async (username, name) => {
+  const { data } = await api.post('/applications', { username, name });
+  return data;
+};
+
+export const getApplications = async () => {
+  const { data } = await api.get('/applications');
+  return data;
+};
+
+export const approveApplication = async (id) => {
+  const { data } = await api.post(`/applications/${id}/approve`);
+  return data;
+};
+
+export const rejectApplication = async (id) => {
+  const { data } = await api.post(`/applications/${id}/reject`);
+  return data;
+};
