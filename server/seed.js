@@ -25,9 +25,9 @@ function seed() {
 
   db.prepare(
     'INSERT INTO users (username, password_hash, name, role, avatar, team, must_change_password) VALUES (?, ?, ?, ?, ?, ?, ?)'
-  ).run('zhangwei', hash, '刘涛', 'admin', '', 'all', 1);
+  ).run('liutao', hash, '刘涛', 'admin', '', 'all', 1);
 
-  console.log('Seed complete! Default login: zhangwei / 123456 (must change password on first login)');
+  console.log('Seed complete! Default login: liutao / 123456 (must change password on first login)');
 }
 
 if (require.main === module) {
