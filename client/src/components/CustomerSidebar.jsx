@@ -733,7 +733,7 @@ export default function CustomerSidebar({ customer, onClose }) {
                       className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">未分配</option>
-                      {team.filter((m) => m.role === 'sales' || m.role === 'manager').map((m) => (
+                      {team.filter((m) => m.role !== 'admin').map((m) => (
                         <option key={m.id} value={m.id}>{m.name || m.username}</option>
                       ))}
                     </select>

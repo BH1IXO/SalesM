@@ -9,6 +9,11 @@ import SettingsPage from './components/SettingsPage';
 import AdminPage from './components/AdminPage';
 import ChangePasswordModal from './components/ChangePasswordModal';
 
+const ROLE_LABELS = {
+  admin: '管理员', executive: '高层领导', sales: '销售', marketing: '市场',
+  product: '产品', dev: '研发', ops: '运营', partner: '合作伙伴',
+};
+
 // ─── Login Page ─────────────────────────────────────────────────────────────
 
 function LoginPage() {
@@ -153,7 +158,7 @@ function Sidebar({ currentPage, onNavigate, collapsed, onToggle }) {
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{user.name || user.username}</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.role || 'sales'}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{ROLE_LABELS[user.role] || user.role || '销售'}</div>
             </div>
             <button
               onClick={logout}

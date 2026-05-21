@@ -4,18 +4,24 @@ import Modal from './Modal';
 
 const ROLE_OPTIONS = [
   { value: 'admin', label: '管理员' },
-  { value: 'manager', label: '经理' },
+  { value: 'executive', label: '高层领导' },
   { value: 'sales', label: '销售' },
-  { value: 'support', label: '技术支持' },
-  { value: 'finance', label: '财务' },
+  { value: 'marketing', label: '市场' },
+  { value: 'product', label: '产品' },
+  { value: 'dev', label: '研发' },
+  { value: 'ops', label: '运营' },
+  { value: 'partner', label: '合作伙伴' },
 ];
 
 const ROLE_COLORS = {
   admin: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
-  manager: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+  executive: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
   sales: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-  support: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-  finance: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
+  marketing: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300',
+  product: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
+  dev: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+  ops: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+  partner: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300',
 };
 
 function CreateUserModal({ open, onClose, onCreated }) {

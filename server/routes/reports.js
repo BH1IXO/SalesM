@@ -49,7 +49,7 @@ router.get('/performance', (req, res) => {
       (SELECT COALESCE(SUM(e.amount),0) FROM expenses e WHERE e.created_by = u.id) as expense_total
     FROM users u
     LEFT JOIN customers c ON c.assigned_to = u.id
-    WHERE u.role IN ('sales','manager')
+    WHERE u.role != 'admin'
     GROUP BY u.id
     ORDER BY won_amount DESC
   `).all();

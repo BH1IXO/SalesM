@@ -5,16 +5,24 @@ import Badge from './Badge';
 
 const ROLE_LABELS = {
   admin: '管理员',
-  manager: '经理',
+  executive: '高层领导',
   sales: '销售',
-  viewer: '观察者',
+  marketing: '市场',
+  product: '产品',
+  dev: '研发',
+  ops: '运营',
+  partner: '合作伙伴',
 };
 
 const ROLE_COLORS = {
   admin: 'purple',
-  manager: 'orange',
+  executive: 'red',
   sales: 'blue',
-  viewer: 'gray',
+  marketing: 'pink',
+  product: 'indigo',
+  dev: 'green',
+  ops: 'orange',
+  partner: 'teal',
 };
 
 function isOverdue(lastFollowUp) {

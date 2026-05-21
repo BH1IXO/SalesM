@@ -68,7 +68,7 @@ export default function NewCustomerForm({ open, onClose }) {
     }
   };
 
-  const salesTeam = store.team.filter((m) => m.role === 'sales' || m.role === 'manager');
+  const salesTeam = store.team.filter((m) => m.role !== 'admin');
 
   return (
     <Modal open={open} onClose={onClose} title="新建客户" wide>
