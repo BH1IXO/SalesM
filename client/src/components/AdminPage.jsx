@@ -1,0 +1,279 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { getUsers, createUser, updateUser, resetUserPassword } from '../api';
+import Modal from './Modal';
+
+const ROLE_OPTIONS = [
+  { value: 'admin', label: '管理员' },
+  { value: 'manager', label: '经理' },
+  { value: 'sales', label: '销售' },
+  { value: 'support', label: '技术支持' },
+  { value: 'finance', label: '财务' },
+];
+
+const ROLE_COLORS = {
+  admin: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+  manager: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+  sales: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+  support: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+  finance: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
+};
+
+function CreateUserModal({ open, onClose, onCreated }) {
+  const [form, setForm] = useState({ username: '', password: '', name: '', role: 'sales', team: '' });
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSubmitting(true);
+    try {
+      await createUser(form);
+      setForm({ username: '', password: '', name: '', role: 'sales', team: '' });
+      onCreated();
+      onClose();
+    } catch (err) {
+      setError(err.response?.data?.error || '创建失败');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} title="新建用户">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {error && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm rounded-lg px-4 py-2">
+            {error}
+          </div>
+        )}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">用户名</label>
+          <input
+            type="text"
+            value={form.username}
+            onChange={(e) => setForm({ ...form, username: e.target.value })}
+            required
+            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+            placeholder="登录用户名（英文）"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">初始密码</label>
+          <input
+            type="text"
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            required
+            minLength={6}
+            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+            placeholder="至少6位，用户首次登录需修改"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">姓名</label>
+          <input
+            type="text"
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            required
+            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">角色</label>
+            <select
+              value={form.role}
+              onChange={(e) => setForm({ ...form, role: e.target.value })}
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            >
+              {ROLE_OPTIONS.map((r) => (
+                <option key={r.value} value={r.value}>{r.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">团队</label>
+            <input
+              type="text"
+              value={form.team}
+              onChange={(e) => setForm({ ...form, team: e.target.value })}
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+              placeholder="如 A, B, tech"
+            />
+          </div>
+        </div>
+        <button
+          type="submit"
+          disabled={submitting}
+          className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium rounded-lg transition"
+        >
+          {submitting ? '创建中...' : '创建用户'}
+        </button>
+      </form>
+    </Modal>
+  );
+}
+
+function ResetPasswordModal({ open, onClose, user, onDone }) {
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSubmitting(true);
+    try {
+      await resetUserPassword(user.id, password);
+      setPassword('');
+      onDone();
+      onClose();
+    } catch (err) {
+      setError(err.response?.data?.error || '重置失败');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} title={`重置密码 - ${user?.name}`}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {error && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm rounded-lg px-4 py-2">
+            {error}
+          </div>
+        )}
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          重置后用户下次登录需要修改密码
+        </p>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">新密码</label>
+          <input
+            type="text"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={6}
+            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+            placeholder="至少6位"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={submitting}
+          className="w-full py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white font-medium rounded-lg transition"
+        >
+          {submitting ? '重置中...' : '确认重置'}
+        </button>
+      </form>
+    </Modal>
+  );
+}
+
+export default function AdminPage() {
+  const [users, setUsers] = useState([]);
+  const [showCreate, setShowCreate] = useState(false);
+  const [resetTarget, setResetTarget] = useState(null);
+
+  const loadUsers = useCallback(async () => {
+    try {
+      const data = await getUsers();
+      setUsers(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Failed to load users:', err);
+    }
+  }, []);
+
+  useEffect(() => { loadUsers(); }, [loadUsers]);
+
+  const handleToggleActive = async (user) => {
+    try {
+      await updateUser(user.id, { active: user.active ? 0 : 1 });
+      loadUsers();
+    } catch (err) {
+      alert(err.response?.data?.error || '操作失败');
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">管理后台</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">用户管理 - 共 {users.length} 个用户</p>
+        </div>
+        <button
+          onClick={() => setShowCreate(true)}
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition flex items-center gap-1"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          新建用户
+        </button>
+      </div>
+
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-gray-50 dark:bg-gray-900/50 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-4 py-3">用户名</th>
+              <th className="px-4 py-3">姓名</th>
+              <th className="px-4 py-3">角色</th>
+              <th className="px-4 py-3">团队</th>
+              <th className="px-4 py-3">状态</th>
+              <th className="px-4 py-3">需改密</th>
+              <th className="px-4 py-3">创建时间</th>
+              <th className="px-4 py-3">操作</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            {users.map((u) => (
+              <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30 transition-colors">
+                <td className="px-4 py-3 text-sm font-mono text-gray-900 dark:text-white">{u.username}</td>
+                <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{u.name}</td>
+                <td className="px-4 py-3">
+                  <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${ROLE_COLORS[u.role] || 'bg-gray-100 text-gray-700'}`}>
+                    {ROLE_OPTIONS.find((r) => r.value === u.role)?.label || u.role}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{u.team || '-'}</td>
+                <td className="px-4 py-3">
+                  <button
+                    onClick={() => handleToggleActive(u)}
+                    className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full cursor-pointer transition ${u.active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'}`}
+                  >
+                    {u.active ? '启用' : '禁用'}
+                  </button>
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-500">
+                  {u.must_change_password ? (
+                    <span className="text-amber-600 dark:text-amber-400">是</span>
+                  ) : (
+                    <span className="text-gray-400">否</span>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{(u.created_at || '').split(' ')[0]}</td>
+                <td className="px-4 py-3">
+                  <button
+                    onClick={() => setResetTarget(u)}
+                    className="text-xs text-red-600 dark:text-red-400 hover:underline"
+                  >
+                    重置密码
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <CreateUserModal open={showCreate} onClose={() => setShowCreate(false)} onCreated={loadUsers} />
+      {resetTarget && (
+        <ResetPasswordModal open={!!resetTarget} onClose={() => setResetTarget(null)} user={resetTarget} onDone={loadUsers} />
+      )}
+    </div>
+  );
+}

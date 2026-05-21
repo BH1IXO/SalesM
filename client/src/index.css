@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body { font-family: 'Inter', system-ui, sans-serif; }
+.scrollbar-thin::-webkit-scrollbar { width: 6px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+.dark .scrollbar-thin::-webkit-scrollbar-thumb { background: #475569; }
+.pipeline-col { min-height: calc(100vh - 220px); }
+.card-drag { opacity: 0.5; }
+.drop-target { border: 2px dashed #3b82f6 !important; background: rgba(59, 130, 246, 0.05) !important; }
+.fade-in { animation: fadeIn 0.2s ease-in; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+.slide-in { animation: slideIn 0.25s ease-out; }
+@keyframes slideIn { from { transform:translateX(100%); } to { transform:translateX(0); } }
+input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; }
+.tab-active { border-bottom: 2px solid #2563eb; color: #2563eb; font-weight: 600; }
+.dark .tab-active { border-bottom-color: #60a5fa; color: #60a5fa; }
