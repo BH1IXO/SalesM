@@ -44,6 +44,8 @@ router.post('/:id/approve', authMiddleware, requireAdmin, (req, res) => {
   const app = db.prepare("SELECT * FROM account_applications WHERE id = ? AND status = 'pending'").get(req.params.id);
   if (!app) return res.status(404).json({ error: '申请不存在或已处理' });
 
+  const role = req.body.role || 'sales';
+
   const existingUser = db.prepare('SELECT id FROM users WHERE username = ?').get(app.username);
   if (existingUser) {
     db.prepare("UPDATE account_applications SET status = 'approved' WHERE id = ?").run(req.params.id);
@@ -54,7 +56,7 @@ router.post('/:id/approve', authMiddleware, requireAdmin, (req, res) => {
   const createAndApprove = db.transaction(() => {
     db.prepare(
       'INSERT INTO users (username, password_hash, name, role, team, must_change_password) VALUES (?, ?, ?, ?, ?, 1)'
-    ).run(app.username, hash, app.name, 'sales', '');
+    ).run(app.username, hash, app.name, role, '');
     db.prepare("UPDATE account_applications SET status = 'approved' WHERE id = ?").run(req.params.id);
   });
   createAndApprove();

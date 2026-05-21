@@ -246,8 +246,8 @@ export const getApplications = async () => {
   return data;
 };
 
-export const approveApplication = async (id) => {
-  const { data } = await api.post(`/applications/${id}/approve`);
+export const approveApplication = async (id, role) => {
+  const { data } = await api.post(`/applications/${id}/approve`, { role });
   return data;
 };
 

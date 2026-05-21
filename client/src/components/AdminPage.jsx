@@ -183,6 +183,7 @@ export default function AdminPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [resetTarget, setResetTarget] = useState(null);
   const [applications, setApplications] = useState([]);
+  const [appRoles, setAppRoles] = useState({});
 
   const loadUsers = useCallback(async () => {
     try {
@@ -214,8 +215,9 @@ export default function AdminPage() {
   };
 
   const handleApprove = async (app) => {
+    const role = appRoles[app.id] || 'sales';
     try {
-      const res = await approveApplication(app.id);
+      const res = await approveApplication(app.id, role);
       alert(res.message || '已通过');
       loadApplications();
       loadUsers();
@@ -266,6 +268,15 @@ export default function AdminPage() {
                   <span className="text-xs text-gray-400 dark:text-gray-500 ml-3">{(app.created_at || '').split(' ')[0]}</span>
                 </div>
                 <div className="flex items-center gap-2">
+                  <select
+                    value={appRoles[app.id] || 'sales'}
+                    onChange={(e) => setAppRoles({ ...appRoles, [app.id]: e.target.value })}
+                    className="border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 text-xs bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
+                    {ROLE_OPTIONS.filter((r) => r.value !== 'admin').map((r) => (
+                      <option key={r.value} value={r.value}>{r.label}</option>
+                    ))}
+                  </select>
                   <button
                     onClick={() => handleApprove(app)}
                     className="px-3 py-1 text-xs font-medium bg-green-600 hover:bg-green-700 text-white rounded-lg transition"
