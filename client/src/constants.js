@@ -10,7 +10,7 @@ export const PIPELINE_STAGES = [
 ];
 
 export const ACTIVITY_TYPES = [
-  { id: 'call', name: '电话沟通', icon: '📞' },
+  { id: 'call', name: '电话/微信沟通', icon: '📞' },
   { id: 'visit', name: '上门拜访', icon: '🏢' },
   { id: 'meeting', name: '线上会议', icon: '💻' },
   { id: 'presentation', name: '方案讲解', icon: '📊' },
