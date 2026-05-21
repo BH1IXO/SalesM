@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '../store';
+import { getCollaborators } from '../api';
 
 const PRIORITY_BORDER = {
   high: 'border-l-red-500',
@@ -17,6 +18,11 @@ function isOverdue(lastFollowUp) {
 
 export default function PipelineCard({ customer, onClick }) {
   const { team } = useStore();
+  const [collabs, setCollabs] = useState([]);
+
+  useEffect(() => {
+    getCollaborators(customer.id).then((data) => setCollabs(Array.isArray(data) ? data : [])).catch(() => {});
+  }, [customer.id]);
 
   const assignee = team.find((m) => m.id === customer.assigned_to);
   const borderColor = PRIORITY_BORDER[customer.priority] || PRIORITY_BORDER.low;
@@ -62,15 +68,29 @@ export default function PipelineCard({ customer, onClick }) {
         )}
       </div>
 
-      {/* Assignee */}
-      {assignee && (
-        <div className="flex items-center gap-1.5 mt-2">
-          <div className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center text-[10px] font-medium flex-shrink-0">
-            {(assignee.name || assignee.username || '?')[0]}
-          </div>
-          <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
-            {assignee.name || assignee.username}
-          </span>
+      {/* Assignee + Collaborators */}
+      {(assignee || collabs.length > 0) && (
+        <div className="flex items-center gap-1 mt-2">
+          {assignee && (
+            <div className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center text-[10px] font-medium flex-shrink-0" title={assignee.name || assignee.username}>
+              {(assignee.name || assignee.username || '?')[0]}
+            </div>
+          )}
+          {collabs.slice(0, 3).map((c) => (
+            <div key={c.user_id} className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400 flex items-center justify-center text-[10px] font-medium flex-shrink-0 -ml-1 ring-1 ring-white dark:ring-gray-800" title={c.name || c.username}>
+              {(c.name || c.username || '?')[0]}
+            </div>
+          ))}
+          {collabs.length > 3 && (
+            <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-300 flex items-center justify-center text-[10px] font-medium flex-shrink-0 -ml-1 ring-1 ring-white dark:ring-gray-800">
+              +{collabs.length - 3}
+            </div>
+          )}
+          {assignee && (
+            <span className="text-xs text-gray-500 dark:text-gray-400 truncate ml-1">
+              {assignee.name || assignee.username}
+            </span>
+          )}
         </div>
       )}
     </div>

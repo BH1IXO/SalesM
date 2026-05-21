@@ -35,6 +35,7 @@ app.get('/api/data/export', authMiddleware, (req, res) => {
     customer_competitors: db.prepare('SELECT * FROM customer_competitors').all(),
     documents: db.prepare('SELECT * FROM documents').all(),
     document_categories: db.prepare('SELECT * FROM document_categories').all(),
+    customer_collaborators: db.prepare('SELECT * FROM customer_collaborators').all(),
     exportDate: new Date().toISOString(),
   };
   res.json(data);

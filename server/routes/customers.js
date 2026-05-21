@@ -107,4 +107,48 @@ router.delete('/:id', (req, res) => {
   res.json({ success: true });
 });
 
+// ── Collaborators ──
+
+router.get('/:customerId/collaborators', (req, res) => {
+  const db = getDb();
+  const collaborators = db.prepare(`
+    SELECT cc.id, cc.user_id, cc.created_at, u.username, u.name, u.avatar, u.role, u.team
+    FROM customer_collaborators cc
+    JOIN users u ON cc.user_id = u.id
+    WHERE cc.customer_id = ?
+    ORDER BY cc.created_at
+  `).all(req.params.customerId);
+  res.json(collaborators);
+});
+
+router.post('/:customerId/collaborators', (req, res) => {
+  const { user_id } = req.body;
+  if (!user_id) return res.status(400).json({ error: '请选择团队成员' });
+
+  const db = getDb();
+  const existing = db.prepare('SELECT id FROM customer_collaborators WHERE customer_id = ? AND user_id = ?')
+    .get(req.params.customerId, user_id);
+  if (existing) return res.status(400).json({ error: '该成员已是协作者' });
+
+  db.prepare('INSERT INTO customer_collaborators (customer_id, user_id) VALUES (?, ?)').run(req.params.customerId, user_id);
+
+  const collaborator = db.prepare(`
+    SELECT cc.id, cc.user_id, cc.created_at, u.username, u.name, u.avatar, u.role, u.team
+    FROM customer_collaborators cc
+    JOIN users u ON cc.user_id = u.id
+    WHERE cc.customer_id = ? AND cc.user_id = ?
+  `).get(req.params.customerId, user_id);
+  res.status(201).json(collaborator);
+});
+
+router.delete('/:customerId/collaborators/:userId', (req, res) => {
+  const db = getDb();
+  const existing = db.prepare('SELECT id FROM customer_collaborators WHERE customer_id = ? AND user_id = ?')
+    .get(req.params.customerId, req.params.userId);
+  if (!existing) return res.status(404).json({ error: '协作者不存在' });
+
+  db.prepare('DELETE FROM customer_collaborators WHERE customer_id = ? AND user_id = ?').run(req.params.customerId, req.params.userId);
+  res.json({ success: true });
+});
+
 module.exports = router;

@@ -108,3 +108,13 @@ CREATE TABLE IF NOT EXISTS documents (
 
 CREATE INDEX IF NOT EXISTS idx_documents_customer ON documents(customer_id);
 CREATE INDEX IF NOT EXISTS idx_documents_category ON documents(category_id);
+
+CREATE TABLE IF NOT EXISTS customer_collaborators (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(customer_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_collaborators_customer ON customer_collaborators(customer_id);

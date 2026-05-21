@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useStore } from '../store';
-import { getActivities, createActivity, getExpenses, createExpense, getCustomerCompetitors, createCustomerCompetitor, updateCustomer as apiUpdateCustomer } from '../api';
+import { getActivities, createActivity, getExpenses, createExpense, getCustomerCompetitors, createCustomerCompetitor, updateCustomer as apiUpdateCustomer, getCollaborators, addCollaborator, removeCollaborator } from '../api';
 import { PIPELINE_STAGES, ACTIVITY_TYPES, EXPENSE_TYPES, LOSS_REASONS } from '../constants';
 import Badge from './Badge';
 import StatCard from './StatCard';
@@ -384,6 +384,8 @@ export default function CustomerSidebar({ customer, onClose }) {
   const [showCompetitorForm, setShowCompetitorForm] = useState(false);
   const [lossModalOpen, setLossModalOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState(null);
+  const [collaborators, setCollaborators] = useState([]);
+  const [showAddCollaborator, setShowAddCollaborator] = useState(false);
 
   // Load tab data
   const loadActivities = useCallback(async () => {
@@ -416,6 +418,35 @@ export default function CustomerSidebar({ customer, onClose }) {
     }
   }, [customer]);
 
+  const loadCollaborators = useCallback(async () => {
+    if (!customer) return;
+    try {
+      const data = await getCollaborators(customer.id);
+      setCollaborators(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Failed to load collaborators:', err);
+    }
+  }, [customer]);
+
+  const handleAddCollaborator = async (userId) => {
+    try {
+      await addCollaborator(customer.id, userId);
+      setShowAddCollaborator(false);
+      loadCollaborators();
+    } catch (err) {
+      alert(err.response?.data?.error || '添加协作者失败');
+    }
+  };
+
+  const handleRemoveCollaborator = async (userId) => {
+    try {
+      await removeCollaborator(customer.id, userId);
+      loadCollaborators();
+    } catch (err) {
+      alert(err.response?.data?.error || '移除协作者失败');
+    }
+  };
+
   useEffect(() => {
     if (!customer) return;
     setTab('info');
@@ -423,10 +454,12 @@ export default function CustomerSidebar({ customer, onClose }) {
     setShowActivityForm(false);
     setShowExpenseForm(false);
     setShowCompetitorForm(false);
+    setShowAddCollaborator(false);
     loadActivities();
     loadExpenses();
     loadCustCompetitors();
-  }, [customer, loadActivities, loadExpenses, loadCustCompetitors]);
+    loadCollaborators();
+  }, [customer, loadActivities, loadExpenses, loadCustCompetitors, loadCollaborators]);
 
   useEffect(() => {
     if (tab === 'activities') loadActivities();
@@ -600,6 +633,55 @@ export default function CustomerSidebar({ customer, onClose }) {
                   <FieldRow label="预计成交" value={customer.expected_close_date ? customer.expected_close_date.slice(0, 10) : '-'} />
                   <FieldRow label="优先级" value={PRIORITY_LABEL[customer.priority] || '-'} />
                   <FieldRow label="负责人" value={assignee ? (assignee.name || assignee.username) : '-'} />
+
+                  {/* Collaborators */}
+                  <div className="py-2 border-b border-gray-100 dark:border-gray-700">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">协作者</span>
+                      <button
+                        onClick={() => setShowAddCollaborator(!showAddCollaborator)}
+                        className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                      >
+                        {showAddCollaborator ? '取消' : '+ 添加'}
+                      </button>
+                    </div>
+                    {showAddCollaborator && (
+                      <div className="mb-2">
+                        <select
+                          onChange={(e) => { if (e.target.value) handleAddCollaborator(Number(e.target.value)); }}
+                          className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                          defaultValue=""
+                        >
+                          <option value="" disabled>选择团队成员...</option>
+                          {team
+                            .filter((m) => m.id !== customer.assigned_to && !collaborators.some((c) => c.user_id === m.id))
+                            .map((m) => (
+                              <option key={m.id} value={m.id}>{m.name || m.username}</option>
+                            ))}
+                        </select>
+                      </div>
+                    )}
+                    {collaborators.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {collaborators.map((c) => (
+                          <div key={c.user_id} className="flex items-center gap-1.5 bg-gray-100 dark:bg-gray-700 rounded-full pl-1 pr-2 py-0.5">
+                            <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400 flex items-center justify-center text-[10px] font-medium flex-shrink-0">
+                              {(c.name || c.username || '?')[0]}
+                            </div>
+                            <span className="text-xs text-gray-700 dark:text-gray-300">{c.name || c.username}</span>
+                            <button
+                              onClick={() => handleRemoveCollaborator(c.user_id)}
+                              className="text-gray-400 hover:text-red-500 text-xs ml-0.5"
+                              title="移除协作者"
+                            >&times;</button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-400">暂无协作者</span>
+                    )}
+                  </div>
+
                   <FieldRow label="最后跟进" value={customer.last_follow_up ? customer.last_follow_up.slice(0, 10) : '-'} />
                   {customer.status === 'lost' && (
                     <>

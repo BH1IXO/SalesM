@@ -116,6 +116,22 @@ export const createCustomerCompetitor = async (customerId, competitorData) => {
   return data;
 };
 
+// Collaborators
+export const getCollaborators = async (customerId) => {
+  const { data } = await api.get(`/customers/${customerId}/collaborators`);
+  return data;
+};
+
+export const addCollaborator = async (customerId, userId) => {
+  const { data } = await api.post(`/customers/${customerId}/collaborators`, { user_id: userId });
+  return data;
+};
+
+export const removeCollaborator = async (customerId, userId) => {
+  const { data } = await api.delete(`/customers/${customerId}/collaborators/${userId}`);
+  return data;
+};
+
 // Team
 export const getTeam = async () => {
   const { data } = await api.get('/team');
