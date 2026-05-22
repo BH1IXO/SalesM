@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const { getDb, DATA_DIR } = require('../db');
+const { logAction } = require('../utils/logger');
 
 const UPLOAD_BASE = path.join(DATA_DIR, 'uploads');
 
@@ -68,6 +69,7 @@ router.post('/:customerId/documents', upload.single('file'), (req, res) => {
     WHERE d.id = ?
   `).get(result.lastInsertRowid);
 
+  logAction(req, '上传文档', `客户#${req.params.customerId}`, originalName);
   res.status(201).json(doc);
 });
 
@@ -81,6 +83,7 @@ router.delete('/:customerId/documents/:docId', (req, res) => {
   try { fs.unlinkSync(filePath); } catch (e) { /* file may already be gone */ }
 
   db.prepare('DELETE FROM documents WHERE id = ?').run(req.params.docId);
+  logAction(req, '删除文档', `客户#${req.params.customerId}`, doc.original_name);
   res.json({ success: true });
 });
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getUsers, createUser, updateUser, resetUserPassword, getApplications, approveApplication, rejectApplication } from '../api';
+import { getUsers, createUser, updateUser, resetUserPassword, getApplications, approveApplication, rejectApplication, getOperationLogs } from '../api';
 import Modal from './Modal';
 
 const ROLE_OPTIONS = [
@@ -184,6 +184,9 @@ export default function AdminPage() {
   const [resetTarget, setResetTarget] = useState(null);
   const [applications, setApplications] = useState([]);
   const [appRoles, setAppRoles] = useState({});
+  const [logs, setLogs] = useState([]);
+  const [logsTotal, setLogsTotal] = useState(0);
+  const [logsPage, setLogsPage] = useState(1);
 
   const loadUsers = useCallback(async () => {
     try {
@@ -203,7 +206,18 @@ export default function AdminPage() {
     }
   }, []);
 
-  useEffect(() => { loadUsers(); loadApplications(); }, [loadUsers, loadApplications]);
+  const loadLogs = useCallback(async (page = 1) => {
+    try {
+      const data = await getOperationLogs(page);
+      setLogs(data.logs || []);
+      setLogsTotal(data.total || 0);
+      setLogsPage(data.page || 1);
+    } catch (err) {
+      console.error('Failed to load logs:', err);
+    }
+  }, []);
+
+  useEffect(() => { loadUsers(); loadApplications(); loadLogs(); }, [loadUsers, loadApplications, loadLogs]);
 
   const handleToggleActive = async (user) => {
     try {
@@ -349,6 +363,64 @@ export default function AdminPage() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Operation Logs */}
+      <div className="mt-8">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">操作日志</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-gray-50 dark:bg-gray-900/50 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-4 py-3">时间</th>
+                <th className="px-4 py-3">用户</th>
+                <th className="px-4 py-3">操作</th>
+                <th className="px-4 py-3">对象</th>
+                <th className="px-4 py-3">详情</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              {logs.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">暂无操作日志</td>
+                </tr>
+              ) : (
+                logs.map((log) => (
+                  <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30 transition-colors">
+                    <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">{log.created_at}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{log.username}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{log.action}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{log.target || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{log.detail || '-'}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+          {logsTotal > 50 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                共 {logsTotal} 条，第 {logsPage} / {Math.ceil(logsTotal / 50)} 页
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => loadLogs(logsPage - 1)}
+                  disabled={logsPage <= 1}
+                  className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg disabled:opacity-40 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition"
+                >
+                  上一页
+                </button>
+                <button
+                  onClick={() => loadLogs(logsPage + 1)}
+                  disabled={logsPage >= Math.ceil(logsTotal / 50)}
+                  className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg disabled:opacity-40 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition"
+                >
+                  下一页
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       <CreateUserModal open={showCreate} onClose={() => setShowCreate(false)} onCreated={loadUsers} />

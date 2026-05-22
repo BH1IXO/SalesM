@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { getDb } = require('../db');
 const { authMiddleware, JWT_SECRET } = require('../middleware/auth');
+const { logAction } = require('../utils/logger');
 
 const router = express.Router();
 
@@ -29,6 +30,8 @@ router.post('/login', (req, res) => {
   );
 
   const { password_hash, ...safeUser } = user;
+  req.user = { id: user.id, name: user.name, username: user.username };
+  logAction(req, '用户登录', user.username);
   res.json({ token, user: safeUser });
 });
 

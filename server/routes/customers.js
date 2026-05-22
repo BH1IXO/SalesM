@@ -2,6 +2,7 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const { getDb, DATA_DIR } = require('../db');
+const { logAction } = require('../utils/logger');
 
 const router = express.Router();
 
@@ -45,6 +46,7 @@ router.post('/', (req, res) => {
   `).run(name, industry || '', size || '', contact || '', contact_title || '', phone || '', email || '', leader_name || '', leader_title || '', leader_phone || '', status || 'leads', amount || 0, expected_close_date || '', priority || 'medium', assigned_to || req.user.id, budget || 0, pain_points || '', solution || '', decision_chain || '', now, now, now);
 
   const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(result.lastInsertRowid);
+  logAction(req, '创建客户', customer.name);
   res.status(201).json(customer);
 });
 
@@ -72,6 +74,7 @@ router.put('/:id', (req, res) => {
 
   db.prepare(`UPDATE customers SET ${updates.join(', ')} WHERE id = ?`).run(...params);
   const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(req.params.id);
+  logAction(req, '编辑客户', existing.name);
   res.json(customer);
 });
 
@@ -91,6 +94,7 @@ router.patch('/:id/status', (req, res) => {
     req.params.id, 'call', `状态变更为：${STAGE_NAMES[status] || status}`, now, req.user.id
   );
 
+  logAction(req, '客户状态变更', existing.name, `→ ${STAGE_NAMES[status] || status}`);
   const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(req.params.id);
   res.json(customer);
 });
@@ -104,6 +108,7 @@ router.delete('/:id', (req, res) => {
   try { fs.rmSync(uploadDir, { recursive: true, force: true }); } catch (e) { /* ignore */ }
 
   db.prepare('DELETE FROM customers WHERE id = ?').run(req.params.id);
+  logAction(req, '删除客户', existing.name);
   res.json({ success: true });
 });
 
@@ -138,6 +143,7 @@ router.post('/:customerId/collaborators', (req, res) => {
     JOIN users u ON cc.user_id = u.id
     WHERE cc.customer_id = ? AND cc.user_id = ?
   `).get(req.params.customerId, user_id);
+  logAction(req, '添加协作者', `客户#${req.params.customerId}`, collaborator?.name || '');
   res.status(201).json(collaborator);
 });
 

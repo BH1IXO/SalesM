@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const { getDb } = require('../db');
 const { authMiddleware } = require('../middleware/auth');
+const { logAction } = require('../utils/logger');
 
 const router = express.Router();
 
@@ -61,6 +62,7 @@ router.post('/:id/approve', authMiddleware, requireAdmin, (req, res) => {
   });
   createAndApprove();
 
+  logAction(req, '审批通过申请', app.username, `角色: ${role}`);
   res.json({ success: true, message: `用户 ${app.name} 已创建，默认密码 123456` });
 });
 
@@ -70,6 +72,7 @@ router.post('/:id/reject', authMiddleware, requireAdmin, (req, res) => {
   if (!app) return res.status(404).json({ error: '申请不存在或已处理' });
 
   db.prepare("UPDATE account_applications SET status = 'rejected' WHERE id = ?").run(req.params.id);
+  logAction(req, '拒绝申请', app.username);
   res.json({ success: true });
 });
 

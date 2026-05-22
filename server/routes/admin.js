@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { getDb } = require('../db');
+const { logAction } = require('../utils/logger');
 
 const router = express.Router();
 
@@ -44,6 +45,7 @@ router.post('/users', (req, res) => {
   const user = db.prepare(
     'SELECT id, username, name, role, avatar, team, phone, email, active, must_change_password, created_at FROM users WHERE id = ?'
   ).get(result.lastInsertRowid);
+  logAction(req, '创建用户', username, `角色: ${role || 'sales'}`);
   res.status(201).json(user);
 });
 
@@ -71,6 +73,7 @@ router.put('/users/:id', (req, res) => {
   const user = db.prepare(
     'SELECT id, username, name, role, avatar, team, phone, email, active, must_change_password, created_at FROM users WHERE id = ?'
   ).get(req.params.id);
+  logAction(req, '更新用户', user.username);
   res.json(user);
 });
 
@@ -80,12 +83,25 @@ router.post('/users/:id/reset-password', (req, res) => {
   if (password.length < 6) return res.status(400).json({ error: '密码长度不能少于6位' });
 
   const db = getDb();
-  const existing = db.prepare('SELECT id FROM users WHERE id = ?').get(req.params.id);
+  const existing = db.prepare('SELECT id, username FROM users WHERE id = ?').get(req.params.id);
   if (!existing) return res.status(404).json({ error: '用户不存在' });
 
   const hash = bcrypt.hashSync(password, 10);
   db.prepare('UPDATE users SET password_hash = ?, must_change_password = 1 WHERE id = ?').run(hash, req.params.id);
+  logAction(req, '重置密码', existing.username);
   res.json({ success: true });
+});
+
+router.get('/logs', (req, res) => {
+  const db = getDb();
+  const page = Math.max(1, parseInt(req.query.page) || 1);
+  const limit = Math.min(100, Math.max(10, parseInt(req.query.limit) || 50));
+  const offset = (page - 1) * limit;
+
+  const total = db.prepare('SELECT COUNT(*) as c FROM operation_logs').get().c;
+  const logs = db.prepare('SELECT * FROM operation_logs ORDER BY created_at DESC LIMIT ? OFFSET ?').all(limit, offset);
+
+  res.json({ logs, total, page, limit });
 });
 
 module.exports = router;

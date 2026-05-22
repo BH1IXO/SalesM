@@ -1,5 +1,6 @@
 const express = require('express');
 const { getDb } = require('../db');
+const { logAction } = require('../utils/logger');
 
 const router = express.Router();
 
@@ -25,6 +26,7 @@ router.post('/:customerId/activities', (req, res) => {
   db.prepare('UPDATE customers SET last_follow_up = ?, updated_at = ? WHERE id = ?').run(now, now, req.params.customerId);
 
   const activity = db.prepare('SELECT a.*, u.name as creator_name FROM activities a LEFT JOIN users u ON a.created_by = u.id WHERE a.id = ?').get(result.lastInsertRowid);
+  logAction(req, '添加跟进记录', `客户#${req.params.customerId}`, `${type}: ${description || ''}`);
   res.status(201).json(activity);
 });
 

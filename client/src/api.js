@@ -255,3 +255,9 @@ export const rejectApplication = async (id) => {
   const { data } = await api.post(`/applications/${id}/reject`);
   return data;
 };
+
+// Operation Logs
+export const getOperationLogs = async (page = 1) => {
+  const { data } = await api.get(`/admin/logs?page=${page}`);
+  return data;
+};

@@ -31,6 +31,22 @@ function getDb() {
       db.exec("ALTER TABLE customers ADD COLUMN leader_phone TEXT DEFAULT ''");
     }
 
+    // Ensure operation_logs table exists
+    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='operation_logs'").get();
+    if (!tables) {
+      db.exec(`CREATE TABLE IF NOT EXISTS operation_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER REFERENCES users(id),
+        username TEXT NOT NULL,
+        action TEXT NOT NULL,
+        target TEXT DEFAULT '',
+        detail TEXT DEFAULT '',
+        ip TEXT DEFAULT '',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`);
+      db.exec("CREATE INDEX IF NOT EXISTS idx_logs_created ON operation_logs(created_at)");
+    }
+
     console.log(`[DB] Database initialized at ${DB_PATH}`);
   }
   return db;
