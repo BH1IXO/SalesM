@@ -1,6 +1,7 @@
 const express = require('express');
 const { getDb } = require('../db');
 const { logAction } = require('../utils/logger');
+const { nowCN, todayCN } = require('../utils/time');
 
 const router = express.Router();
 
@@ -18,7 +19,7 @@ router.post('/:customerId/activities', (req, res) => {
 
   if (!type) return res.status(400).json({ error: '活动类型不能为空' });
 
-  const now = date || new Date().toISOString().split('T')[0];
+  const now = date || todayCN();
   const result = db.prepare(
     'INSERT INTO activities (customer_id, type, description, date, created_by, next_follow_up) VALUES (?, ?, ?, ?, ?, ?)'
   ).run(req.params.customerId, type, description || '', now, req.user.id, next_follow_up || null);
@@ -37,11 +38,12 @@ router.post('/:customerId/activities', (req, res) => {
     const content = `${actorName} 对客户 ${customerName} 添加了${typeLabel}记录`;
 
     const recipients = db.prepare('SELECT id FROM users WHERE active = 1 AND id != ?').all(req.user.id);
+    const msgNow = nowCN();
     const insertMsg = db.prepare(
-      'INSERT INTO messages (user_id, activity_id, customer_id, customer_name, actor_name, activity_type, content) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      'INSERT INTO messages (user_id, activity_id, customer_id, customer_name, actor_name, activity_type, content, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
     );
     for (const r of recipients) {
-      insertMsg.run(r.id, result.lastInsertRowid, parseInt(req.params.customerId), customerName, actorName, type, content);
+      insertMsg.run(r.id, result.lastInsertRowid, parseInt(req.params.customerId), customerName, actorName, type, content, msgNow);
     }
   } catch (e) {
     console.error('[Messages] Failed to create notifications:', e.message);

@@ -5,6 +5,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const { getDb, DATA_DIR } = require('../db');
 const { logAction } = require('../utils/logger');
+const { nowCN } = require('../utils/time');
 
 const UPLOAD_BASE = path.join(DATA_DIR, 'uploads', 'competitors');
 
@@ -35,9 +36,10 @@ router.post('/', (req, res) => {
   const { name, strengths, weaknesses, pricing, typical_customers, tactics } = req.body;
   if (!name) return res.status(400).json({ error: '竞品名称不能为空' });
 
+  const now = nowCN();
   const result = db.prepare(
-    'INSERT INTO competitors (name, strengths, weaknesses, pricing, typical_customers, tactics) VALUES (?, ?, ?, ?, ?, ?)'
-  ).run(name, strengths || '', weaknesses || '', pricing || '', typical_customers || '', tactics || '');
+    'INSERT INTO competitors (name, strengths, weaknesses, pricing, typical_customers, tactics, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+  ).run(name, strengths || '', weaknesses || '', pricing || '', typical_customers || '', tactics || '', now);
 
   const competitor = db.prepare('SELECT * FROM competitors WHERE id = ?').get(result.lastInsertRowid);
   logAction(req, '添加竞品', name);
@@ -131,8 +133,8 @@ router.post('/:id/files', upload.single('file'), (req, res) => {
   const { notes } = req.body;
 
   const result = db.prepare(
-    'INSERT INTO competitor_files (competitor_id, filename, original_name, size, mime_type, notes, uploaded_by) VALUES (?, ?, ?, ?, ?, ?, ?)'
-  ).run(req.params.id, req.file.filename, originalName, req.file.size, req.file.mimetype, notes || '', req.user.id);
+    'INSERT INTO competitor_files (competitor_id, filename, original_name, size, mime_type, notes, uploaded_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+  ).run(req.params.id, req.file.filename, originalName, req.file.size, req.file.mimetype, notes || '', req.user.id, nowCN());
 
   const file = db.prepare(`
     SELECT cf.*, u.name as uploader_name

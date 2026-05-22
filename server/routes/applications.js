@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const { getDb } = require('../db');
 const { authMiddleware } = require('../middleware/auth');
 const { logAction } = require('../utils/logger');
+const { nowCN } = require('../utils/time');
 
 const router = express.Router();
 
@@ -30,7 +31,7 @@ router.post('/', (req, res) => {
     return res.status(400).json({ error: '该用户名已有待审批的申请' });
   }
 
-  db.prepare('INSERT INTO account_applications (username, name) VALUES (?, ?)').run(username, name);
+  db.prepare('INSERT INTO account_applications (username, name, created_at) VALUES (?, ?, ?)').run(username, name, nowCN());
   res.status(201).json({ success: true, message: '申请已提交，请等待管理员审批' });
 });
 
@@ -56,8 +57,8 @@ router.post('/:id/approve', authMiddleware, requireAdmin, (req, res) => {
   const hash = bcrypt.hashSync('123456', 10);
   const createAndApprove = db.transaction(() => {
     db.prepare(
-      'INSERT INTO users (username, password_hash, name, role, team, must_change_password) VALUES (?, ?, ?, ?, ?, 1)'
-    ).run(app.username, hash, app.name, role, '');
+      'INSERT INTO users (username, password_hash, name, role, team, must_change_password, created_at) VALUES (?, ?, ?, ?, ?, 1, ?)'
+    ).run(app.username, hash, app.name, role, '', nowCN());
     db.prepare("UPDATE account_applications SET status = 'approved' WHERE id = ?").run(req.params.id);
   });
   createAndApprove();

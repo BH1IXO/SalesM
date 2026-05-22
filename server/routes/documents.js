@@ -5,6 +5,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const { getDb, DATA_DIR } = require('../db');
 const { logAction } = require('../utils/logger');
+const { nowCN } = require('../utils/time');
 
 const UPLOAD_BASE = path.join(DATA_DIR, 'uploads');
 
@@ -48,8 +49,8 @@ router.post('/:customerId/documents', upload.single('file'), (req, res) => {
   const originalName = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
 
   const result = db.prepare(`
-    INSERT INTO documents (customer_id, category_id, filename, original_name, size, mime_type, notes, uploaded_by)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO documents (customer_id, category_id, filename, original_name, size, mime_type, notes, uploaded_by, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     req.params.customerId,
     category_id || null,
@@ -58,7 +59,8 @@ router.post('/:customerId/documents', upload.single('file'), (req, res) => {
     req.file.size,
     req.file.mimetype,
     notes || '',
-    req.user.id
+    req.user.id,
+    nowCN()
   );
 
   const doc = db.prepare(`

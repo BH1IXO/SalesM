@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const { getDb } = require('../db');
 const { logAction } = require('../utils/logger');
+const { nowCN } = require('../utils/time');
 
 const router = express.Router();
 
@@ -39,8 +40,8 @@ router.post('/users', (req, res) => {
 
   const hash = bcrypt.hashSync(password, 10);
   const result = db.prepare(
-    'INSERT INTO users (username, password_hash, name, role, team, must_change_password) VALUES (?, ?, ?, ?, ?, 1)'
-  ).run(username, hash, name, role || 'sales', team || '');
+    'INSERT INTO users (username, password_hash, name, role, team, must_change_password, created_at) VALUES (?, ?, ?, ?, ?, 1, ?)'
+  ).run(username, hash, name, role || 'sales', team || '', nowCN());
 
   const user = db.prepare(
     'SELECT id, username, name, role, avatar, team, phone, email, active, must_change_password, created_at FROM users WHERE id = ?'

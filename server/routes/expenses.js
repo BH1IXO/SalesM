@@ -1,6 +1,7 @@
 const express = require('express');
 const { getDb } = require('../db');
 const { logAction } = require('../utils/logger');
+const { todayCN } = require('../utils/time');
 
 const router = express.Router();
 
@@ -18,7 +19,7 @@ router.post('/:customerId/expenses', (req, res) => {
 
   if (!type || amount === undefined) return res.status(400).json({ error: '费用类型和金额不能为空' });
 
-  const now = date || new Date().toISOString().split('T')[0];
+  const now = date || todayCN();
   const result = db.prepare(
     'INSERT INTO expenses (customer_id, activity_id, type, amount, description, date, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)'
   ).run(req.params.customerId, activity_id || null, type, amount, description || '', now, req.user.id);
