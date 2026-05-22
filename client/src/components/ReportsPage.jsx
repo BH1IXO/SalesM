@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getReportOverview, getReportPipeline, getReportPerformance, getReportExpenseBreakdown } from '../api';
 import StatCard from './StatCard';
-import { PIPELINE_STAGES, ACTIVITY_TYPES, EXPENSE_TYPES } from '../constants';
+import { PIPELINE_STAGES, EXPENSE_TYPES } from '../constants';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
@@ -70,15 +70,6 @@ export default function ReportsPage() {
       value: Number(item.total || 0),
     };
   }).filter((d) => d.value > 0);
-
-  // Prepare activity type data for horizontal bar chart
-  const activityData = (overview?.activityBreakdown || []).map((item) => {
-    const typeObj = ACTIVITY_TYPES.find((t) => t.id === item.type);
-    return {
-      name: typeObj?.name || item.type,
-      count: item.count || 0,
-    };
-  });
 
   return (
     <div className="space-y-6">
@@ -183,29 +174,41 @@ export default function ReportsPage() {
                 <tr className="border-b border-gray-200 dark:border-gray-700">
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">排名</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">销售人员</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">赢单金额</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">管道金额</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">活动数</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">客户数</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">赢单数</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">管道金额</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">赢单金额</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">活动数</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
-                {performance.map((p, idx) => (
-                  <tr key={p.id || idx} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                    <td className="px-4 py-3 text-gray-900 dark:text-white font-medium">{idx + 1}</td>
-                    <td className="px-4 py-3 text-gray-900 dark:text-white">{p.name || '-'}</td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{p.total_customers || 0}</td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{p.won_count || 0}</td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
-                      {((p.pipeline_amount || 0) / 10000).toFixed(1)}万
-                    </td>
-                    <td className="px-4 py-3 text-green-600 dark:text-green-400 font-medium">
-                      {((p.won_amount || 0) / 10000).toFixed(1)}万
-                    </td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{p.activity_count || 0}</td>
-                  </tr>
-                ))}
+                {performance.map((p, idx) => {
+                  const MEDALS = ['bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300', 'bg-gray-200 text-gray-600 dark:bg-gray-600 dark:text-gray-200', 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'];
+                  const MEDAL_LABELS = ['🥇', '🥈', '🥉'];
+                  return (
+                    <tr key={p.id || idx} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                      <td className="px-4 py-3">
+                        {idx < 3 ? (
+                          <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-sm font-bold ${MEDALS[idx]}`}>
+                            {MEDAL_LABELS[idx]}
+                          </span>
+                        ) : (
+                          <span className="text-gray-500 dark:text-gray-400 font-medium ml-1.5">{idx + 1}</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-gray-900 dark:text-white font-medium">{p.name || '-'}</td>
+                      <td className="px-4 py-3 text-green-600 dark:text-green-400 font-medium">
+                        {((p.won_amount || 0) / 10000).toFixed(1)}万
+                      </td>
+                      <td className="px-4 py-3 text-blue-600 dark:text-blue-400">
+                        {((p.pipeline_amount || 0) / 10000).toFixed(1)}万
+                      </td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{p.activity_count || 0}</td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{p.total_customers || 0}</td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{p.won_count || 0}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -213,25 +216,6 @@ export default function ReportsPage() {
           <div className="text-center text-gray-400 dark:text-gray-500 py-8">暂无数据</div>
         )}
       </div>
-
-      {/* Activity type chart */}
-      {activityData.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">活动类型分布</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={activityData} layout="vertical" margin={{ top: 5, right: 20, bottom: 5, left: 60 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis type="number" tick={{ fontSize: 12 }} />
-              <YAxis dataKey="name" type="category" tick={{ fontSize: 12 }} width={80} />
-              <Tooltip
-                contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
-                formatter={(value) => [value, '次数']}
-              />
-              <Bar dataKey="count" fill="#8b5cf6" name="次数" radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      )}
     </div>
   );
 }

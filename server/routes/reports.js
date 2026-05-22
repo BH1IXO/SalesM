@@ -53,7 +53,7 @@ router.get('/performance', (req, res) => {
     LEFT JOIN customers c ON c.assigned_to = u.id
     WHERE u.active = 1
     GROUP BY u.id
-    ORDER BY won_amount DESC
+    ORDER BY won_amount DESC, pipeline_amount DESC, activity_count DESC, total_customers DESC
   `).all();
   res.json(performance);
 });
