@@ -14,11 +14,13 @@ router.get('/overview', (req, res) => {
   const wonAmount = db.prepare("SELECT COALESCE(SUM(amount),0) as s FROM customers WHERE status = 'won'").get().s;
   const totalExpenses = db.prepare('SELECT COALESCE(SUM(amount),0) as s FROM expenses').get().s;
   const avgDealSize = db.prepare("SELECT COALESCE(AVG(amount),0) as a FROM customers WHERE status = 'won'").get().a;
+  const activityBreakdown = db.prepare('SELECT type, COUNT(*) as count FROM activities GROUP BY type ORDER BY count DESC').all();
 
   res.json({
     totalCustomers, activeCustomers, wonCustomers, lostCustomers,
     totalPipeline, wonAmount, totalExpenses, avgDealSize,
     winRate: totalCustomers > 0 ? ((wonCustomers / (wonCustomers + lostCustomers)) * 100 || 0).toFixed(1) : 0,
+    activityBreakdown,
   });
 });
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getReportOverview, getReportPipeline, getReportPerformance, getReportExpenseBreakdown } from '../api';
 import StatCard from './StatCard';
+import { PIPELINE_STAGES, ACTIVITY_TYPES, EXPENSE_TYPES } from '../constants';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
@@ -46,29 +47,38 @@ export default function ReportsPage() {
     );
   }
 
-  const pipelineTotal = overview?.pipeline_total || overview?.pipelineTotal || 0;
-  const wonAmount = overview?.won_amount || overview?.wonAmount || 0;
-  const winRate = overview?.win_rate || overview?.winRate || 0;
-  const totalExpenses = overview?.total_expenses || overview?.totalExpenses || 0;
+  const pipelineTotal = overview?.totalPipeline || 0;
+  const wonAmount = overview?.wonAmount || 0;
+  const winRate = overview?.winRate || 0;
+  const totalExpenses = overview?.totalExpenses || 0;
 
   // Prepare pipeline chart data
-  const pipelineChartData = pipeline.map((item) => ({
-    name: item.stage_name || item.stageName || item.name || item.status,
-    count: item.count || 0,
-    amount: ((item.total_amount || item.totalAmount || item.amount || 0) / 10000),
-  }));
+  const pipelineChartData = pipeline.map((item) => {
+    const stage = PIPELINE_STAGES.find((s) => s.id === item.status);
+    return {
+      name: stage?.name || item.status,
+      count: item.count || 0,
+      amount: ((item.total_amount || 0) / 10000),
+    };
+  });
 
   // Prepare expense chart data
-  const expenseChartData = expenses.map((item) => ({
-    name: item.type_name || item.typeName || item.type || item.name,
-    value: Number(item.total_amount || item.totalAmount || item.amount || item.value || 0),
-  })).filter((d) => d.value > 0);
+  const expenseChartData = expenses.map((item) => {
+    const typeObj = EXPENSE_TYPES.find((t) => t.id === item.type);
+    return {
+      name: typeObj?.name || item.type || item.name,
+      value: Number(item.total || 0),
+    };
+  }).filter((d) => d.value > 0);
 
   // Prepare activity type data for horizontal bar chart
-  const activityData = (overview?.activity_breakdown || overview?.activityBreakdown || []).map((item) => ({
-    name: item.type_name || item.typeName || item.type || item.name,
-    count: item.count || 0,
-  }));
+  const activityData = (overview?.activityBreakdown || []).map((item) => {
+    const typeObj = ACTIVITY_TYPES.find((t) => t.id === item.type);
+    return {
+      name: typeObj?.name || item.type,
+      count: item.count || 0,
+    };
+  });
 
   return (
     <div className="space-y-6">
@@ -89,10 +99,10 @@ export default function ReportsPage() {
         />
         <StatCard
           label="赢单率"
-          value={`${(winRate * 100).toFixed(1)}%`}
+          value={`${winRate}%`}
           icon="📊"
-          trend={winRate >= 0.3 ? 'up' : 'down'}
-          sub={winRate >= 0.3 ? '表现良好' : '需要提升'}
+          trend={Number(winRate) >= 30 ? 'up' : 'down'}
+          sub={Number(winRate) >= 30 ? '表现良好' : '需要提升'}
         />
         <StatCard
           label="总费用"
@@ -182,18 +192,18 @@ export default function ReportsPage() {
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
                 {performance.map((p, idx) => (
-                  <tr key={p.user_id || p.userId || idx} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                  <tr key={p.id || idx} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
                     <td className="px-4 py-3 text-gray-900 dark:text-white font-medium">{idx + 1}</td>
-                    <td className="px-4 py-3 text-gray-900 dark:text-white">{p.name || p.username || '-'}</td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{p.customer_count || p.customerCount || 0}</td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{p.won_count || p.wonCount || 0}</td>
+                    <td className="px-4 py-3 text-gray-900 dark:text-white">{p.name || '-'}</td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{p.total_customers || 0}</td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{p.won_count || 0}</td>
                     <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
-                      {((p.pipeline_amount || p.pipelineAmount || 0) / 10000).toFixed(1)}万
+                      {((p.pipeline_amount || 0) / 10000).toFixed(1)}万
                     </td>
                     <td className="px-4 py-3 text-green-600 dark:text-green-400 font-medium">
-                      {((p.won_amount || p.wonAmount || 0) / 10000).toFixed(1)}万
+                      {((p.won_amount || 0) / 10000).toFixed(1)}万
                     </td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{p.activity_count || p.activityCount || 0}</td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{p.activity_count || 0}</td>
                   </tr>
                 ))}
               </tbody>
