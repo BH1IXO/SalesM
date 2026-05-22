@@ -9,6 +9,7 @@ import TeamPage from './components/TeamPage';
 import SettingsPage from './components/SettingsPage';
 import AdminPage from './components/AdminPage';
 import ChangePasswordModal from './components/ChangePasswordModal';
+import MessagePanel from './components/MessagePanel';
 
 const ROLE_LABELS = {
   admin: '管理员', executive: '高层领导', sales: '销售', marketing: '市场',
@@ -339,7 +340,8 @@ function Sidebar({ currentPage, onNavigate, collapsed, onToggle }) {
 // ─── Header ─────────────────────────────────────────────────────────────────
 
 function Header({ title }) {
-  const { darkMode, setDarkMode, searchTerm, setSearchTerm } = useStore();
+  const { darkMode, setDarkMode, searchTerm, setSearchTerm, unreadCount } = useStore();
+  const [showMessages, setShowMessages] = useState(false);
 
   return (
     <header className="h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-6 sticky top-0 z-10">
@@ -358,6 +360,25 @@ function Header({ title }) {
             placeholder="搜索客户..."
             className="pl-9 pr-4 py-2 w-64 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
           />
+        </div>
+
+        {/* Messages */}
+        <div className="relative">
+          <button
+            onClick={() => setShowMessages(!showMessages)}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors relative"
+            title="消息通知"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            {unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold text-white bg-red-500 rounded-full">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </button>
+          <MessagePanel open={showMessages} onClose={() => setShowMessages(false)} />
         </div>
 
         {/* Dark mode toggle */}

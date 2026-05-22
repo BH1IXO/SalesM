@@ -25,6 +25,7 @@ app.use('/api/customers', authMiddleware, require('./routes/documents'));
 app.use('/api/document-categories', authMiddleware, require('./routes/documentCategories'));
 app.use('/api/admin', authMiddleware, require('./routes/admin'));
 app.use('/api/applications', require('./routes/applications'));
+app.use('/api/messages', authMiddleware, require('./routes/messages'));
 
 app.get('/api/data/export', authMiddleware, (req, res) => {
   const db = getDb();

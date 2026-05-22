@@ -266,3 +266,19 @@ export const getOperationLogs = async (page = 1) => {
   const { data } = await api.get(`/admin/logs?page=${page}`);
   return data;
 };
+
+// Messages
+export const getMessages = async () => {
+  const { data } = await api.get('/messages');
+  return data;
+};
+
+export const markMessageRead = async (id) => {
+  const { data } = await api.patch(`/messages/${id}/read`);
+  return data;
+};
+
+export const markAllMessagesRead = async () => {
+  const { data } = await api.patch('/messages/read-all');
+  return data;
+};

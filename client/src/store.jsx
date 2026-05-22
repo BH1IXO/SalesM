@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import * as apiClient from './api';
 
 // ─── Auth Context ───────────────────────────────────────────────────────────
@@ -106,6 +106,10 @@ export function StoreProvider({ children }) {
   const [filterPriority, setFilterPriority] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Messages state
+  const [messages, setMessages] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const pollRef = useRef(null);
   // Dark mode side effect
   useEffect(() => {
     localStorage.setItem('salesm_darkMode', darkMode);
@@ -148,14 +152,52 @@ export function StoreProvider({ children }) {
     }
   }, []);
 
+  const loadMessages = useCallback(async () => {
+    try {
+      const data = await apiClient.getMessages();
+      setMessages(data.messages || []);
+      setUnreadCount(data.unreadCount || 0);
+    } catch (err) {
+      console.error('Failed to load messages:', err);
+    }
+  }, []);
+
+  const markRead = useCallback(async (id) => {
+    try {
+      await apiClient.markMessageRead(id);
+      setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, is_read: 1 } : m)));
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    } catch (err) {
+      console.error('Failed to mark message read:', err);
+    }
+  }, []);
+
+  const markAllRead = useCallback(async () => {
+    try {
+      await apiClient.markAllMessagesRead();
+      setMessages((prev) => prev.map((m) => ({ ...m, is_read: 1 })));
+      setUnreadCount(0);
+    } catch (err) {
+      console.error('Failed to mark all read:', err);
+    }
+  }, []);
+
   // Load data on mount when authenticated
   useEffect(() => {
     if (isAuthenticated) {
       loadCustomers();
       loadTeam();
       loadCompetitors();
+      loadMessages();
     }
-  }, [isAuthenticated, loadCustomers, loadTeam, loadCompetitors]);
+  }, [isAuthenticated, loadCustomers, loadTeam, loadCompetitors, loadMessages]);
+
+  // Poll messages every 30 seconds
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    pollRef.current = setInterval(loadMessages, 30000);
+    return () => clearInterval(pollRef.current);
+  }, [isAuthenticated, loadMessages]);
 
   // ─── Customer operations ────────────────────────────────────────────────
 
@@ -302,6 +344,13 @@ export function StoreProvider({ children }) {
     exportData: doExportData,
     importData: doImportData,
     exportCSV,
+
+    // Messages
+    messages,
+    unreadCount,
+    loadMessages,
+    markRead,
+    markAllRead,
   }), [
     customers, team, competitors, loading, filteredCustomers,
     searchTerm, filterAssignee, filterPriority,
@@ -309,6 +358,7 @@ export function StoreProvider({ children }) {
     loadCustomers, addCustomer, updateCustomer, removeCustomer, moveCustomer,
     loadTeam, loadCompetitors, addCompetitor,
     doExportData, doImportData, exportCSV,
+    messages, unreadCount, loadMessages, markRead, markAllRead,
   ]);
 
   return (

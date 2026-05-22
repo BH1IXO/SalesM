@@ -143,3 +143,18 @@ CREATE TABLE IF NOT EXISTS operation_logs (
 );
 
 CREATE INDEX IF NOT EXISTS idx_logs_created ON operation_logs(created_at);
+
+CREATE TABLE IF NOT EXISTS messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  activity_id INTEGER REFERENCES activities(id),
+  customer_id INTEGER REFERENCES customers(id),
+  customer_name TEXT DEFAULT '',
+  actor_name TEXT DEFAULT '',
+  activity_type TEXT DEFAULT '',
+  content TEXT DEFAULT '',
+  is_read INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_messages_user ON messages(user_id, is_read);
