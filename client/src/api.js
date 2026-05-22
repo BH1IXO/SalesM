@@ -106,6 +106,16 @@ export const createCompetitor = async (competitorData) => {
   return data;
 };
 
+export const updateCompetitor = async (id, competitorData) => {
+  const { data } = await api.put(`/competitors/${id}`, competitorData);
+  return data;
+};
+
+export const deleteCompetitor = async (id) => {
+  const { data } = await api.delete(`/competitors/${id}`);
+  return data;
+};
+
 export const getCustomerCompetitors = async (customerId) => {
   const { data } = await api.get(`/competitors/customer/${customerId}`);
   return data;
@@ -114,6 +124,33 @@ export const getCustomerCompetitors = async (customerId) => {
 export const createCustomerCompetitor = async (customerId, competitorData) => {
   const { data } = await api.post(`/competitors/customer/${customerId}`, competitorData);
   return data;
+};
+
+// Competitor Files
+export const getCompetitorFiles = async (competitorId) => {
+  const { data } = await api.get(`/competitors/${competitorId}/files`);
+  return data;
+};
+
+export const uploadCompetitorFile = async (competitorId, formData, onProgress) => {
+  const { data } = await api.post(`/competitors/${competitorId}/files`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    onUploadProgress: onProgress,
+  });
+  return data;
+};
+
+export const deleteCompetitorFile = async (competitorId, fileId) => {
+  const { data } = await api.delete(`/competitors/${competitorId}/files/${fileId}`);
+  return data;
+};
+
+export const downloadCompetitorFile = async (competitorId, fileId, inline = false) => {
+  const response = await api.get(
+    `/competitors/${competitorId}/files/${fileId}/download${inline ? '?inline=1' : ''}`,
+    { responseType: 'blob' }
+  );
+  return response;
 };
 
 // Collaborators

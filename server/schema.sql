@@ -158,3 +158,17 @@ CREATE TABLE IF NOT EXISTS messages (
 );
 
 CREATE INDEX IF NOT EXISTS idx_messages_user ON messages(user_id, is_read);
+
+CREATE TABLE IF NOT EXISTS competitor_files (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  competitor_id INTEGER NOT NULL REFERENCES competitors(id) ON DELETE CASCADE,
+  filename TEXT NOT NULL,
+  original_name TEXT NOT NULL,
+  size INTEGER NOT NULL,
+  mime_type TEXT NOT NULL DEFAULT '',
+  notes TEXT DEFAULT '',
+  uploaded_by INTEGER REFERENCES users(id),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_competitor_files ON competitor_files(competitor_id);
