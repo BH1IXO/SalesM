@@ -19,6 +19,18 @@ function getDb() {
 
     const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf-8');
     db.exec(schema);
+
+    // Migrations for existing databases
+    const cols = db.prepare("PRAGMA table_info(customers)").all().map(c => c.name);
+    if (!cols.includes('contact_title')) {
+      db.exec("ALTER TABLE customers ADD COLUMN contact_title TEXT DEFAULT ''");
+    }
+    if (!cols.includes('leader_name')) {
+      db.exec("ALTER TABLE customers ADD COLUMN leader_name TEXT DEFAULT ''");
+      db.exec("ALTER TABLE customers ADD COLUMN leader_title TEXT DEFAULT ''");
+      db.exec("ALTER TABLE customers ADD COLUMN leader_phone TEXT DEFAULT ''");
+    }
+
     console.log(`[DB] Database initialized at ${DB_PATH}`);
   }
   return db;

@@ -626,8 +626,12 @@ export default function CustomerSidebar({ customer, onClose }) {
                   <FieldRow label="行业" value={customer.industry} />
                   <FieldRow label="规模" value={customer.size} />
                   <FieldRow label="联系人" value={customer.contact} />
+                  <FieldRow label="联系人职位" value={customer.contact_title} />
                   <FieldRow label="电话" value={customer.phone} />
                   <FieldRow label="邮箱" value={customer.email} />
+                  <FieldRow label="公司领导" value={customer.leader_name} />
+                  <FieldRow label="领导职位" value={customer.leader_title} />
+                  <FieldRow label="领导电话" value={customer.leader_phone} />
                   <FieldRow label="商机金额" value={customer.amount ? `¥${Number(customer.amount).toLocaleString()}` : '-'} />
                   <FieldRow label="预算" value={customer.budget ? `¥${Number(customer.budget).toLocaleString()}` : '-'} />
                   <FieldRow label="预计成交" value={customer.expected_close_date ? customer.expected_close_date.slice(0, 10) : '-'} />
@@ -697,8 +701,12 @@ export default function CustomerSidebar({ customer, onClose }) {
                     { key: 'industry', label: '行业', type: 'text' },
                     { key: 'size', label: '规模', type: 'text' },
                     { key: 'contact', label: '联系人', type: 'text' },
+                    { key: 'contact_title', label: '联系人职位', type: 'text' },
                     { key: 'phone', label: '电话', type: 'text' },
                     { key: 'email', label: '邮箱', type: 'email' },
+                    { key: 'leader_name', label: '公司领导', type: 'text' },
+                    { key: 'leader_title', label: '领导职位', type: 'text' },
+                    { key: 'leader_phone', label: '领导电话', type: 'text' },
                     { key: 'amount', label: '商机金额', type: 'number' },
                     { key: 'budget', label: '预算', type: 'number' },
                     { key: 'expected_close_date', label: '预计成交日期', type: 'date' },
