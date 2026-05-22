@@ -56,20 +56,16 @@ export default function TeamPage() {
   }, []);
 
   const getMemberStats = (memberId) => {
-    // Try to get from performance API data
-    const perfData = performance.find(
-      (p) => (p.user_id || p.userId) === memberId
-    );
+    const perfData = performance.find((p) => p.id === memberId);
     if (perfData) {
       return {
-        customerCount: perfData.customer_count || perfData.customerCount || 0,
-        wonCount: perfData.won_count || perfData.wonCount || 0,
-        pipelineAmount: perfData.pipeline_amount || perfData.pipelineAmount || 0,
-        activityCount: perfData.activity_count || perfData.activityCount || 0,
+        customerCount: perfData.total_customers || 0,
+        wonCount: perfData.won_count || 0,
+        pipelineAmount: perfData.pipeline_amount || 0,
+        activityCount: perfData.activity_count || 0,
       };
     }
 
-    // Fallback: calculate from store customers
     const memberCustomers = customers.filter((c) => c.assigned_to === memberId);
     return {
       customerCount: memberCustomers.length,
