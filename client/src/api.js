@@ -235,6 +235,11 @@ export const resetUserPassword = async (id, password) => {
   return data;
 };
 
+export const deleteUser = async (id, transferTo) => {
+  const { data } = await api.delete(`/admin/users/${id}`, { data: { transferTo } });
+  return data;
+};
+
 // Account Applications
 export const submitApplication = async (username, name) => {
   const { data } = await api.post('/applications', { username, name });

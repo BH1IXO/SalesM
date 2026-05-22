@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getUsers, createUser, updateUser, resetUserPassword, getApplications, approveApplication, rejectApplication, getOperationLogs } from '../api';
+import { getUsers, createUser, updateUser, resetUserPassword, deleteUser, getApplications, approveApplication, rejectApplication, getOperationLogs } from '../api';
 import Modal from './Modal';
 
 const ROLE_OPTIONS = [
@@ -178,10 +178,125 @@ function ResetPasswordModal({ open, onClose, user, onDone }) {
   );
 }
 
+function DeleteUserModal({ open, onClose, user, allUsers, onDone }) {
+  const [transferTo, setTransferTo] = useState('');
+  const [customerCount, setCustomerCount] = useState(0);
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [step, setStep] = useState('init');
+
+  useEffect(() => {
+    if (!open || !user) return;
+    setError('');
+    setStep('init');
+    setTransferTo('');
+    setCustomerCount(0);
+    // Try delete without transferTo to check if user has customers
+    deleteUser(user.id, null).then(() => {
+      // Deleted successfully (no customers)
+      onDone();
+      onClose();
+    }).catch((err) => {
+      const data = err.response?.data;
+      if (data?.customerCount) {
+        setCustomerCount(data.customerCount);
+        setStep('transfer');
+      } else {
+        setError(data?.error || '删除失败');
+        setStep('error');
+      }
+    });
+  }, [open, user]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleConfirm = async () => {
+    if (!transferTo) {
+      setError('请选择客户转移目标');
+      return;
+    }
+    setError('');
+    setSubmitting(true);
+    try {
+      await deleteUser(user.id, parseInt(transferTo));
+      onDone();
+      onClose();
+    } catch (err) {
+      setError(err.response?.data?.error || '删除失败');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (!user) return null;
+
+  const otherUsers = allUsers.filter((u) => u.id !== user.id && u.active);
+
+  if (step === 'init') {
+    return (
+      <Modal open={open} onClose={onClose} title="删除用户">
+        <div className="flex items-center justify-center py-8">
+          <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          <span className="ml-3 text-sm text-gray-500">检查中...</span>
+        </div>
+      </Modal>
+    );
+  }
+
+  if (step === 'error') {
+    return (
+      <Modal open={open} onClose={onClose} title="删除用户">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm rounded-lg px-4 py-3">
+          {error}
+        </div>
+      </Modal>
+    );
+  }
+
+  return (
+    <Modal open={open} onClose={onClose} title={`删除用户 - ${user.name}`}>
+      <div className="space-y-4">
+        {error && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm rounded-lg px-4 py-2">
+            {error}
+          </div>
+        )}
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-4 py-3">
+          <p className="text-sm text-amber-800 dark:text-amber-300 font-medium">
+            该用户名下有 {customerCount} 个客户
+          </p>
+          <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">
+            删除前需要将客户转移给其他用户
+          </p>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">转移客户给</label>
+          <select
+            value={transferTo}
+            onChange={(e) => setTransferTo(e.target.value)}
+            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          >
+            <option value="">请选择用户</option>
+            {otherUsers.map((u) => (
+              <option key={u.id} value={u.id}>{u.name} ({u.username})</option>
+            ))}
+          </select>
+        </div>
+        <button
+          onClick={handleConfirm}
+          disabled={submitting || !transferTo}
+          className="w-full py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white font-medium rounded-lg transition"
+        >
+          {submitting ? '删除中...' : '确认删除并转移客户'}
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
 export default function AdminPage() {
   const [users, setUsers] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
   const [resetTarget, setResetTarget] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [applications, setApplications] = useState([]);
   const [appRoles, setAppRoles] = useState({});
   const [logs, setLogs] = useState([]);
@@ -352,12 +467,20 @@ export default function AdminPage() {
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{(u.created_at || '').split(' ')[0]}</td>
                 <td className="px-4 py-3">
-                  <button
-                    onClick={() => setResetTarget(u)}
-                    className="text-xs text-red-600 dark:text-red-400 hover:underline"
-                  >
-                    重置密码
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setResetTarget(u)}
+                      className="text-xs text-red-600 dark:text-red-400 hover:underline"
+                    >
+                      重置密码
+                    </button>
+                    <button
+                      onClick={() => setDeleteTarget(u)}
+                      className="text-xs text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:underline"
+                    >
+                      删除
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -426,6 +549,9 @@ export default function AdminPage() {
       <CreateUserModal open={showCreate} onClose={() => setShowCreate(false)} onCreated={loadUsers} />
       {resetTarget && (
         <ResetPasswordModal open={!!resetTarget} onClose={() => setResetTarget(null)} user={resetTarget} onDone={loadUsers} />
+      )}
+      {deleteTarget && (
+        <DeleteUserModal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} user={deleteTarget} allUsers={users} onDone={loadUsers} />
       )}
     </div>
   );
