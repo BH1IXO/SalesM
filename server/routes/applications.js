@@ -64,7 +64,7 @@ router.post('/:id/approve', authMiddleware, requireAdmin, (req, res) => {
   createAndApprove();
 
   logAction(req, '审批通过申请', app.username, `角色: ${role}`);
-  res.json({ success: true, message: `用户 ${app.name} 已创建，默认密码 123456` });
+  res.json({ success: true, username: app.username, name: app.name, password: '123456' });
 });
 
 router.post('/:id/reject', authMiddleware, requireAdmin, (req, res) => {

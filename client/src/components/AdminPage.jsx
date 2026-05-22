@@ -302,6 +302,8 @@ export default function AdminPage() {
   const [logs, setLogs] = useState([]);
   const [logsTotal, setLogsTotal] = useState(0);
   const [logsPage, setLogsPage] = useState(1);
+  const [approvedInfo, setApprovedInfo] = useState(null);
+  const [copied, setCopied] = useState(false);
 
   const loadUsers = useCallback(async () => {
     try {
@@ -347,7 +349,8 @@ export default function AdminPage() {
     const role = appRoles[app.id] || 'sales';
     try {
       const res = await approveApplication(app.id, role);
-      alert(res.message || '已通过');
+      setApprovedInfo({ username: res.username, name: res.name, password: res.password });
+      setCopied(false);
       loadApplications();
       loadUsers();
     } catch (err) {
@@ -552,6 +555,52 @@ export default function AdminPage() {
       )}
       {deleteTarget && (
         <DeleteUserModal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} user={deleteTarget} allUsers={users} onDone={loadUsers} />
+      )}
+      {approvedInfo && (
+        <Modal open={!!approvedInfo} onClose={() => setApprovedInfo(null)} title="审批通过">
+          <div className="space-y-4">
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg px-4 py-3">
+              <p className="text-sm text-green-700 dark:text-green-300 font-medium">
+                用户 {approvedInfo.name} 已创建成功
+              </p>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg px-4 py-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-500 dark:text-gray-400">登录账号</span>
+                <span className="text-sm font-mono font-semibold text-gray-900 dark:text-white">{approvedInfo.username}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-500 dark:text-gray-400">初始密码</span>
+                <span className="text-sm font-mono font-semibold text-gray-900 dark:text-white">{approvedInfo.password}</span>
+              </div>
+            </div>
+            <p className="text-xs text-gray-400 dark:text-gray-500">用户首次登录后需修改密码</p>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(`登录账号：${approvedInfo.username}\n初始密码：${approvedInfo.password}`);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              }}
+              className={`w-full py-2.5 font-medium rounded-lg text-sm transition flex items-center justify-center gap-2 ${copied ? 'bg-green-600 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+            >
+              {copied ? (
+                <>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                  已复制
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  复制账号密码
+                </>
+              )}
+            </button>
+          </div>
+        </Modal>
       )}
     </div>
   );
