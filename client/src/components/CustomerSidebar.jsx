@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useStore } from '../store';
-import { getActivities, createActivity, getExpenses, createExpense, getCustomerCompetitors, createCustomerCompetitor, updateCustomer as apiUpdateCustomer, getCollaborators, addCollaborator, removeCollaborator } from '../api';
+import { getActivities, createActivity, updateActivity, deleteActivity, getExpenses, createExpense, getCustomerCompetitors, createCustomerCompetitor, updateCustomer as apiUpdateCustomer, getCollaborators, addCollaborator, removeCollaborator } from '../api';
 import { PIPELINE_STAGES, ACTIVITY_TYPES, EXPENSE_TYPES, LOSS_REASONS } from '../constants';
 import Badge from './Badge';
 import StatCard from './StatCard';
@@ -57,19 +57,35 @@ function BaselineSection({ label, value, onSave }) {
 
 // ─── Activity Form ─────────────────────────────────────────────────────────
 
-function ActivityForm({ customerId, onCreated }) {
+function ActivityForm({ customerId, onCreated, editTarget, onCancelEdit }) {
+  const isEdit = !!editTarget;
   const [form, setForm] = useState({ type: 'call', description: '', date: new Date().toISOString().slice(0, 10), next_follow_up: '' });
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (editTarget) {
+      setForm({
+        type: editTarget.type || 'call',
+        description: editTarget.description || '',
+        date: editTarget.date ? editTarget.date.slice(0, 10) : new Date().toISOString().slice(0, 10),
+        next_follow_up: editTarget.next_follow_up ? editTarget.next_follow_up.slice(0, 10) : '',
+      });
+    }
+  }, [editTarget]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await createActivity(customerId, form);
-      setForm({ type: 'call', description: '', date: new Date().toISOString().slice(0, 10), next_follow_up: '' });
+      if (isEdit) {
+        await updateActivity(customerId, editTarget.id, form);
+      } else {
+        await createActivity(customerId, form);
+        setForm({ type: 'call', description: '', date: new Date().toISOString().slice(0, 10), next_follow_up: '' });
+      }
       onCreated();
     } catch (err) {
-      console.error('Failed to create activity:', err);
+      console.error('Failed to save activity:', err);
     } finally {
       setSubmitting(false);
     }
@@ -119,13 +135,24 @@ function ActivityForm({ customerId, onCreated }) {
           className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
-      <button
-        type="submit"
-        disabled={submitting}
-        className="w-full py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium rounded-lg transition"
-      >
-        {submitting ? '添加中...' : '添加活动'}
-      </button>
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={submitting}
+          className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium rounded-lg transition"
+        >
+          {submitting ? (isEdit ? '保存中...' : '添加中...') : (isEdit ? '保存修改' : '添加活动')}
+        </button>
+        {isEdit && (
+          <button
+            type="button"
+            onClick={onCancelEdit}
+            className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition"
+          >
+            取消
+          </button>
+        )}
+      </div>
     </form>
   );
 }
@@ -386,6 +413,7 @@ export default function CustomerSidebar({ customer, onClose }) {
   const [pendingStatus, setPendingStatus] = useState(null);
   const [collaborators, setCollaborators] = useState([]);
   const [showAddCollaborator, setShowAddCollaborator] = useState(false);
+  const [editingActivity, setEditingActivity] = useState(null);
 
   // Load tab data
   const loadActivities = useCallback(async () => {
@@ -547,8 +575,19 @@ export default function CustomerSidebar({ customer, onClose }) {
 
   const activityCreated = async () => {
     setShowActivityForm(false);
+    setEditingActivity(null);
     await loadActivities();
     await store.loadCustomers();
+  };
+
+  const handleDeleteActivity = async (activity) => {
+    if (!confirm(`确定删除这条${ACTIVITY_TYPES.find(t => t.id === activity.type)?.name || ''}记录？`)) return;
+    try {
+      await deleteActivity(customer.id, activity.id);
+      await loadActivities();
+    } catch (err) {
+      alert('删除失败');
+    }
   };
 
   const expenseCreated = async () => {
@@ -773,7 +812,7 @@ export default function CustomerSidebar({ customer, onClose }) {
           {tab === 'activities' && (
             <div>
               <button
-                onClick={() => setShowActivityForm(!showActivityForm)}
+                onClick={() => { setShowActivityForm(!showActivityForm); setEditingActivity(null); }}
                 className="mb-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition flex items-center gap-1"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -781,12 +820,24 @@ export default function CustomerSidebar({ customer, onClose }) {
                 </svg>
                 添加活动
               </button>
-              {showActivityForm && <ActivityForm customerId={customer.id} onCreated={activityCreated} />}
+              {showActivityForm && !editingActivity && <ActivityForm customerId={customer.id} onCreated={activityCreated} />}
               <div className="space-y-3">
                 {activities.map((a) => {
                   const typeObj = ACTIVITY_TYPES.find((t) => t.id === a.type);
+                  if (editingActivity?.id === a.id) {
+                    return (
+                      <div key={a.id}>
+                        <ActivityForm
+                          customerId={customer.id}
+                          editTarget={a}
+                          onCreated={activityCreated}
+                          onCancelEdit={() => setEditingActivity(null)}
+                        />
+                      </div>
+                    );
+                  }
                   return (
-                    <div key={a.id} className="flex gap-3 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+                    <div key={a.id} className="flex gap-3 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg group">
                       <div className="text-xl flex-shrink-0">{typeObj?.icon || '📋'}</div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
@@ -798,6 +849,26 @@ export default function CustomerSidebar({ customer, onClose }) {
                           {a.creator_name && <span>由 {a.creator_name}</span>}
                           {a.next_follow_up && <span className="ml-2">下次跟进: {a.next_follow_up.slice(0, 10)}</span>}
                         </div>
+                      </div>
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                        <button
+                          onClick={() => { setEditingActivity(a); setShowActivityForm(false); }}
+                          className="p-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                          title="编辑"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteActivity(a)}
+                          className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+                          title="删除"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
                       </div>
                     </div>
                   );

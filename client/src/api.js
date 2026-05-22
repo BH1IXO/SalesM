@@ -84,6 +84,16 @@ export const createActivity = async (customerId, activityData) => {
   return data;
 };
 
+export const updateActivity = async (customerId, activityId, activityData) => {
+  const { data } = await api.put(`/customers/${customerId}/activities/${activityId}`, activityData);
+  return data;
+};
+
+export const deleteActivity = async (customerId, activityId) => {
+  const { data } = await api.delete(`/customers/${customerId}/activities/${activityId}`);
+  return data;
+};
+
 // Expenses
 export const getExpenses = async (customerId) => {
   const { data } = await api.get(`/customers/${customerId}/expenses`);

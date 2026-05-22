@@ -52,4 +52,31 @@ router.post('/:customerId/activities', (req, res) => {
   res.status(201).json(activity);
 });
 
+router.put('/:customerId/activities/:activityId', (req, res) => {
+  const db = getDb();
+  const existing = db.prepare('SELECT * FROM activities WHERE id = ? AND customer_id = ?').get(req.params.activityId, req.params.customerId);
+  if (!existing) return res.status(404).json({ error: '记录不存在' });
+
+  const { type, description, date, next_follow_up } = req.body;
+  if (!type) return res.status(400).json({ error: '活动类型不能为空' });
+
+  db.prepare('UPDATE activities SET type = ?, description = ?, date = ?, next_follow_up = ? WHERE id = ?')
+    .run(type, description || '', date || existing.date, next_follow_up || null, req.params.activityId);
+
+  const activity = db.prepare('SELECT a.*, u.name as creator_name FROM activities a LEFT JOIN users u ON a.created_by = u.id WHERE a.id = ?').get(req.params.activityId);
+  logAction(req, '编辑跟进记录', `客户#${req.params.customerId}`, `${type}: ${description || ''}`);
+  res.json(activity);
+});
+
+router.delete('/:customerId/activities/:activityId', (req, res) => {
+  const db = getDb();
+  const existing = db.prepare('SELECT * FROM activities WHERE id = ? AND customer_id = ?').get(req.params.activityId, req.params.customerId);
+  if (!existing) return res.status(404).json({ error: '记录不存在' });
+
+  db.prepare('DELETE FROM messages WHERE activity_id = ?').run(req.params.activityId);
+  db.prepare('DELETE FROM activities WHERE id = ?').run(req.params.activityId);
+  logAction(req, '删除跟进记录', `客户#${req.params.customerId}`, `${existing.type}: ${existing.description || ''}`);
+  res.json({ success: true });
+});
+
 module.exports = router;
