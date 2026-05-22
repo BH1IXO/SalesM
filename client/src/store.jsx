@@ -205,7 +205,7 @@ export function StoreProvider({ children }) {
         const matchContact = c.contact_person && c.contact_person.toLowerCase().includes(term);
         if (!matchName && !matchCompany && !matchContact) return false;
       }
-      if (filterAssignee && c.assigned_to !== filterAssignee) return false;
+      if (filterAssignee && String(c.assigned_to) !== String(filterAssignee)) return false;
       if (filterPriority && c.priority !== filterPriority) return false;
       return true;
     });
