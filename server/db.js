@@ -30,6 +30,11 @@ function getDb() {
       db.exec("ALTER TABLE customers ADD COLUMN leader_title TEXT DEFAULT ''");
       db.exec("ALTER TABLE customers ADD COLUMN leader_phone TEXT DEFAULT ''");
     }
+    if (!cols.includes('amount_onetime')) {
+      db.exec("ALTER TABLE customers ADD COLUMN amount_onetime REAL DEFAULT 0");
+      db.exec("ALTER TABLE customers ADD COLUMN amount_monthly REAL DEFAULT 0");
+      db.exec("ALTER TABLE customers ADD COLUMN amount_months INTEGER DEFAULT 1");
+    }
 
     // Ensure operation_logs table exists
     const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='operation_logs'").get();

@@ -36,14 +36,19 @@ router.get('/:id', (req, res) => {
 
 router.post('/', (req, res) => {
   const db = getDb();
-  const { name, industry, size, contact, contact_title, phone, email, leader_name, leader_title, leader_phone, status, amount, expected_close_date, priority, assigned_to, budget, pain_points, solution, decision_chain } = req.body;
+  const { name, industry, size, contact, contact_title, phone, email, leader_name, leader_title, leader_phone, status, amount_onetime, amount_monthly, amount_months, expected_close_date, priority, assigned_to, budget, pain_points, solution, decision_chain } = req.body;
 
   if (!name) return res.status(400).json({ error: '客户名称不能为空' });
 
+  const onetime = Number(amount_onetime) || 0;
+  const monthly = Number(amount_monthly) || 0;
+  const months = Number(amount_months) || 1;
+  const amount = onetime + monthly * months;
+
   const now = todayCN();  const result = db.prepare(`
-    INSERT INTO customers (name, industry, size, contact, contact_title, phone, email, leader_name, leader_title, leader_phone, status, amount, expected_close_date, priority, assigned_to, budget, pain_points, solution, decision_chain, last_follow_up, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(name, industry || '', size || '', contact || '', contact_title || '', phone || '', email || '', leader_name || '', leader_title || '', leader_phone || '', status || 'leads', amount || 0, expected_close_date || '', priority || 'medium', assigned_to || req.user.id, budget || 0, pain_points || '', solution || '', decision_chain || '', now, now, now);
+    INSERT INTO customers (name, industry, size, contact, contact_title, phone, email, leader_name, leader_title, leader_phone, status, amount, amount_onetime, amount_monthly, amount_months, expected_close_date, priority, assigned_to, budget, pain_points, solution, decision_chain, last_follow_up, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(name, industry || '', size || '', contact || '', contact_title || '', phone || '', email || '', leader_name || '', leader_title || '', leader_phone || '', status || 'leads', amount, onetime, monthly, months, expected_close_date || '', priority || 'medium', assigned_to || req.user.id, budget || 0, pain_points || '', solution || '', decision_chain || '', now, now, now);
 
   const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(result.lastInsertRowid);
   logAction(req, '创建客户', customer.name);
@@ -55,7 +60,7 @@ router.put('/:id', (req, res) => {
   const existing = db.prepare('SELECT * FROM customers WHERE id = ?').get(req.params.id);
   if (!existing) return res.status(404).json({ error: '客户不存在' });
 
-  const fields = ['name', 'industry', 'size', 'contact', 'contact_title', 'phone', 'email', 'leader_name', 'leader_title', 'leader_phone', 'status', 'amount', 'expected_close_date', 'priority', 'assigned_to', 'budget', 'pain_points', 'solution', 'decision_chain', 'last_follow_up', 'loss_reason', 'loss_competitor'];
+  const fields = ['name', 'industry', 'size', 'contact', 'contact_title', 'phone', 'email', 'leader_name', 'leader_title', 'leader_phone', 'status', 'amount_onetime', 'amount_monthly', 'amount_months', 'expected_close_date', 'priority', 'assigned_to', 'budget', 'pain_points', 'solution', 'decision_chain', 'last_follow_up', 'loss_reason', 'loss_competitor'];
   const updates = [];
   const params = [];
 
@@ -64,6 +69,14 @@ router.put('/:id', (req, res) => {
       updates.push(`${f} = ?`);
       params.push(req.body[f]);
     }
+  }
+
+  if (req.body.amount_onetime !== undefined || req.body.amount_monthly !== undefined || req.body.amount_months !== undefined) {
+    const onetime = Number(req.body.amount_onetime ?? existing.amount_onetime) || 0;
+    const monthly = Number(req.body.amount_monthly ?? existing.amount_monthly) || 0;
+    const months = Number(req.body.amount_months ?? existing.amount_months) || 1;
+    updates.push('amount = ?');
+    params.push(onetime + monthly * months);
   }
 
   if (updates.length === 0) return res.json(existing);

@@ -15,7 +15,9 @@ export default function NewCustomerForm({ open, onClose }) {
     email: '',
     status: 'leads',
     assigned_to: '',
-    amount: '',
+    amount_onetime: '',
+    amount_monthly: '',
+    amount_months: '1',
     budget: '',
     expected_close_date: '',
     priority: 'medium',
@@ -39,7 +41,9 @@ export default function NewCustomerForm({ open, onClose }) {
     try {
       const payload = {
         ...form,
-        amount: form.amount ? Number(form.amount) : 0,
+        amount_onetime: form.amount_onetime ? Number(form.amount_onetime) : 0,
+        amount_monthly: form.amount_monthly ? Number(form.amount_monthly) : 0,
+        amount_months: form.amount_months ? Number(form.amount_months) : 1,
         budget: form.budget ? Number(form.budget) : 0,
         assigned_to: form.assigned_to ? Number(form.assigned_to) : null,
       };
@@ -53,7 +57,9 @@ export default function NewCustomerForm({ open, onClose }) {
         email: '',
         status: 'leads',
         assigned_to: '',
-        amount: '',
+        amount_onetime: '',
+        amount_monthly: '',
+        amount_months: '1',
         budget: '',
         expected_close_date: '',
         priority: 'medium',
@@ -184,16 +190,47 @@ export default function NewCustomerForm({ open, onClose }) {
             </select>
           </div>
 
-          {/* Amount */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">商机金额 (元)</label>
-            <input
-              type="number"
-              value={form.amount}
-              onChange={(e) => handleChange('amount', e.target.value)}
-              placeholder="0"
-              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
-            />
+          {/* Amount breakdown */}
+          <div className="col-span-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 space-y-3">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">商机金额</label>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">一次性服务费 (元)</label>
+                <input
+                  type="number"
+                  value={form.amount_onetime}
+                  onChange={(e) => handleChange('amount_onetime', e.target.value)}
+                  placeholder="0"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">月服务费 (元)</label>
+                <input
+                  type="number"
+                  value={form.amount_monthly}
+                  onChange={(e) => handleChange('amount_monthly', e.target.value)}
+                  placeholder="0"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">服务月数</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={form.amount_months}
+                  onChange={(e) => handleChange('amount_months', e.target.value)}
+                  placeholder="1"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              总金额：<span className="font-medium text-gray-900 dark:text-white">
+                ¥{((Number(form.amount_onetime) || 0) + (Number(form.amount_monthly) || 0) * (Number(form.amount_months) || 1)).toLocaleString()}
+              </span>
+            </p>
           </div>
 
           {/* Budget */}

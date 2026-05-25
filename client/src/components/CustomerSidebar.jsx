@@ -510,7 +510,9 @@ export default function CustomerSidebar({ customer, onClose }) {
       contact: customer.contact || '',
       phone: customer.phone || '',
       email: customer.email || '',
-      amount: customer.amount || '',
+      amount_onetime: customer.amount_onetime || '',
+      amount_monthly: customer.amount_monthly || '',
+      amount_months: customer.amount_months || '1',
       budget: customer.budget || '',
       expected_close_date: customer.expected_close_date ? customer.expected_close_date.slice(0, 10) : '',
       priority: customer.priority || 'medium',
@@ -521,7 +523,13 @@ export default function CustomerSidebar({ customer, onClose }) {
 
   const saveEdit = async () => {
     try {
-      await store.updateCustomer(customer.id, { ...editForm, amount: Number(editForm.amount) || 0, budget: Number(editForm.budget) || 0 });
+      await store.updateCustomer(customer.id, {
+        ...editForm,
+        amount_onetime: Number(editForm.amount_onetime) || 0,
+        amount_monthly: Number(editForm.amount_monthly) || 0,
+        amount_months: Number(editForm.amount_months) || 1,
+        budget: Number(editForm.budget) || 0,
+      });
       setEditing(false);
     } catch (err) {
       console.error('Failed to update customer:', err);
@@ -671,7 +679,7 @@ export default function CustomerSidebar({ customer, onClose }) {
                   <FieldRow label="公司领导" value={customer.leader_name} />
                   <FieldRow label="领导职位" value={customer.leader_title} />
                   <FieldRow label="领导电话" value={customer.leader_phone} />
-                  <FieldRow label="商机金额" value={customer.amount ? `¥${Number(customer.amount).toLocaleString()}` : '-'} />
+                  <FieldRow label="商机金额" value={customer.amount ? `¥${Number(customer.amount).toLocaleString()}${customer.amount_monthly ? ` (一次性¥${Number(customer.amount_onetime || 0).toLocaleString()} + ¥${Number(customer.amount_monthly).toLocaleString()}/月×${customer.amount_months || 1}月)` : ''}` : '-'} />
                   <FieldRow label="预算" value={customer.budget ? `¥${Number(customer.budget).toLocaleString()}` : '-'} />
                   <FieldRow label="预计成交" value={customer.expected_close_date ? customer.expected_close_date.slice(0, 10) : '-'} />
                   <FieldRow label="优先级" value={PRIORITY_LABEL[customer.priority] || '-'} />
@@ -746,7 +754,6 @@ export default function CustomerSidebar({ customer, onClose }) {
                     { key: 'leader_name', label: '公司领导', type: 'text' },
                     { key: 'leader_title', label: '领导职位', type: 'text' },
                     { key: 'leader_phone', label: '领导电话', type: 'text' },
-                    { key: 'amount', label: '商机金额', type: 'number' },
                     { key: 'budget', label: '预算', type: 'number' },
                     { key: 'expected_close_date', label: '预计成交日期', type: 'date' },
                   ].map((f) => (
@@ -760,6 +767,27 @@ export default function CustomerSidebar({ customer, onClose }) {
                       />
                     </div>
                   ))}
+                  <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 space-y-2">
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400">商机金额</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-0.5">一次性费用</label>
+                        <input type="number" value={editForm.amount_onetime || ''} onChange={(e) => setEditForm({ ...editForm, amount_onetime: e.target.value })}
+                          className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-0.5">月服务费</label>
+                        <input type="number" value={editForm.amount_monthly || ''} onChange={(e) => setEditForm({ ...editForm, amount_monthly: e.target.value })}
+                          className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-0.5">月数</label>
+                        <input type="number" min="1" value={editForm.amount_months || ''} onChange={(e) => setEditForm({ ...editForm, amount_months: e.target.value })}
+                          className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500">总额：¥{((Number(editForm.amount_onetime) || 0) + (Number(editForm.amount_monthly) || 0) * (Number(editForm.amount_months) || 1)).toLocaleString()}</p>
+                  </div>
                   <div>
                     <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">优先级</label>
                     <select
