@@ -849,58 +849,85 @@ export default function CustomerSidebar({ customer, onClose }) {
                 添加活动
               </button>
               {showActivityForm && !editingActivity && <ActivityForm customerId={customer.id} onCreated={activityCreated} />}
-              <div className="space-y-3">
-                {activities.map((a) => {
-                  const typeObj = ACTIVITY_TYPES.find((t) => t.id === a.type);
-                  if (editingActivity?.id === a.id) {
+
+              {/* Timeline */}
+              <div className="relative">
+                {activities.length > 1 && (
+                  <div className="absolute left-[19px] top-8 bottom-4 w-px bg-gray-200 dark:bg-gray-700" />
+                )}
+                <div className="space-y-0">
+                  {activities.map((a, idx) => {
+                    const typeObj = ACTIVITY_TYPES.find((t) => t.id === a.type);
+                    if (editingActivity?.id === a.id) {
+                      return (
+                        <div key={a.id} className="mb-3">
+                          <ActivityForm
+                            customerId={customer.id}
+                            editTarget={a}
+                            onCreated={activityCreated}
+                            onCancelEdit={() => setEditingActivity(null)}
+                          />
+                        </div>
+                      );
+                    }
                     return (
-                      <div key={a.id}>
-                        <ActivityForm
-                          customerId={customer.id}
-                          editTarget={a}
-                          onCreated={activityCreated}
-                          onCancelEdit={() => setEditingActivity(null)}
-                        />
+                      <div key={a.id} className="relative flex gap-3 pb-5 group">
+                        <div className="relative z-10 flex-shrink-0 w-10 h-10 rounded-full bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 flex items-center justify-center text-base shadow-sm">
+                          {typeObj?.icon || '📋'}
+                        </div>
+                        <div className="flex-1 min-w-0 pt-0.5">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <span className="text-sm font-semibold text-gray-900 dark:text-white">{typeObj?.name || a.type}</span>
+                              <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">{a.date ? a.date.slice(0, 10) : ''}</span>
+                            </div>
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                              <button
+                                onClick={() => { setEditingActivity(a); setShowActivityForm(false); }}
+                                className="p-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                                title="编辑"
+                              >
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteActivity(a)}
+                                className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+                                title="删除"
+                              >
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                          {a.description && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 whitespace-pre-wrap leading-relaxed">{a.description}</p>
+                          )}
+                          <div className="flex items-center gap-3 mt-2 text-xs text-gray-400 dark:text-gray-500">
+                            {a.creator_name && (
+                              <span className="flex items-center gap-1">
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                                {a.creator_name}
+                              </span>
+                            )}
+                            {a.next_follow_up && (
+                              <span className="flex items-center gap-1 text-blue-500 dark:text-blue-400">
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                下次跟进 {a.next_follow_up.slice(0, 10)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     );
-                  }
-                  return (
-                    <div key={a.id} className="flex gap-3 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg group">
-                      <div className="text-xl flex-shrink-0">{typeObj?.icon || '📋'}</div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className="text-sm font-medium text-gray-900 dark:text-white">{typeObj?.name || a.type}</span>
-                          <span className="text-xs text-gray-400 dark:text-gray-500">{a.date ? a.date.slice(0, 10) : ''}</span>
-                        </div>
-                        {a.description && <p className="text-sm text-gray-600 dark:text-gray-400">{a.description}</p>}
-                        <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                          {a.creator_name && <span>由 {a.creator_name}</span>}
-                          {a.next_follow_up && <span className="ml-2">下次跟进: {a.next_follow_up.slice(0, 10)}</span>}
-                        </div>
-                      </div>
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                        <button
-                          onClick={() => { setEditingActivity(a); setShowActivityForm(false); }}
-                          className="p-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
-                          title="编辑"
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => handleDeleteActivity(a)}
-                          className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
-                          title="删除"
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+                  })}
+                </div>
                 {activities.length === 0 && (
                   <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">暂无跟进记录</p>
                 )}
