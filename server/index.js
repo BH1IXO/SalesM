@@ -21,6 +21,7 @@ app.use('/api/customers', authMiddleware, require('./routes/expenses'));
 app.use('/api/competitors', authMiddleware, require('./routes/competitors'));
 app.use('/api/team', authMiddleware, require('./routes/team'));
 app.use('/api/reports', authMiddleware, require('./routes/reports'));
+app.use('/api/standup', authMiddleware, require('./routes/standup'));
 app.use('/api/customers', authMiddleware, require('./routes/documents'));
 app.use('/api/document-categories', authMiddleware, require('./routes/documentCategories'));
 app.use('/api/admin', authMiddleware, require('./routes/admin'));

@@ -206,6 +206,11 @@ export const getReportExpenseBreakdown = async () => {
   return data;
 };
 
+export const getStandupData = async () => {
+  const { data } = await api.get('/standup');
+  return data;
+};
+
 // Data Import/Export
 export const exportData = async () => {
   const { data } = await api.get('/data/export');
