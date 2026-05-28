@@ -494,8 +494,8 @@ export default function AdminPage() {
       {/* Operation Logs */}
       <div className="mt-8">
         <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">操作日志</h2>
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <table className="w-full">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-x-auto">
+          <table className="w-full min-w-[700px]">
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-900/50 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 <th className="px-4 py-3">时间</th>
@@ -515,8 +515,8 @@ export default function AdminPage() {
                   <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30 transition-colors">
                     <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">{log.created_at}</td>
                     <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{log.username}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{log.action}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{log.target || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">{log.action}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">{log.target || '-'}</td>
                     <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{log.detail || '-'}</td>
                   </tr>
                 ))
