@@ -5,9 +5,9 @@ const { getDb } = require('../db');
 router.get('/', (req, res) => {
   const db = getDb();
 
+  const days = Math.min(Math.max(parseInt(req.query.days) || 2, 1), 90);
   const today = new Date(Date.now() + 8 * 3600 * 1000);
-  const twoDaysAgo = new Date(today.getTime() - 2 * 24 * 3600 * 1000);
-  const fromDate = twoDaysAgo.toISOString().slice(0, 10);
+  const fromDate = new Date(today.getTime() - days * 24 * 3600 * 1000).toISOString().slice(0, 10);
   const toDate = today.toISOString().slice(0, 10);
 
   const activities = db.prepare(`

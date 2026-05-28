@@ -206,8 +206,8 @@ export const getReportExpenseBreakdown = async () => {
   return data;
 };
 
-export const getStandupData = async () => {
-  const { data } = await api.get('/standup');
+export const getStandupData = async (days = 2) => {
+  const { data } = await api.get(`/standup?days=${days}`);
   return data;
 };
 
