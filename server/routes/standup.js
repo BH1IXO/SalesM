@@ -13,10 +13,12 @@ router.get('/', (req, res) => {
   const activities = db.prepare(`
     SELECT a.id, a.customer_id, a.type, a.description, a.date, a.next_follow_up,
            a.created_by, u.name AS creator_name, u.team AS creator_team,
-           c.name AS customer_name, c.status AS customer_status
+           c.name AS customer_name, c.status AS customer_status,
+           c.assigned_to, au.name AS assigned_name
     FROM activities a
     LEFT JOIN users u ON a.created_by = u.id
     LEFT JOIN customers c ON a.customer_id = c.id
+    LEFT JOIN users au ON c.assigned_to = au.id
     WHERE a.date >= ?
     ORDER BY a.date DESC, a.created_at DESC
   `).all(fromDate);

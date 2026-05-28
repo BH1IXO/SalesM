@@ -162,6 +162,17 @@ CREATE TABLE IF NOT EXISTS messages (
 
 CREATE INDEX IF NOT EXISTS idx_messages_user ON messages(user_id, is_read);
 
+CREATE TABLE IF NOT EXISTS nudges (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  customer_id INTEGER NOT NULL REFERENCES customers(id),
+  nudged_user_id INTEGER NOT NULL REFERENCES users(id),
+  created_by INTEGER NOT NULL REFERENCES users(id),
+  is_active INTEGER DEFAULT 1,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  cleared_at DATETIME
+);
+CREATE INDEX IF NOT EXISTS idx_nudges_active ON nudges(customer_id, nudged_user_id, is_active);
+
 CREATE TABLE IF NOT EXISTS competitor_files (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   competitor_id INTEGER NOT NULL REFERENCES competitors(id) ON DELETE CASCADE,

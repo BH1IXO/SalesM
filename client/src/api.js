@@ -211,6 +211,16 @@ export const getStandupData = async (days = 2) => {
   return data;
 };
 
+export const getNudges = async () => {
+  const { data } = await api.get('/nudges');
+  return data;
+};
+
+export const createNudge = async (customerId) => {
+  const { data } = await api.post('/nudges', { customer_id: customerId });
+  return data;
+};
+
 // Data Import/Export
 export const exportData = async () => {
   const { data } = await api.get('/data/export');

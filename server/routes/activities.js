@@ -49,6 +49,14 @@ router.post('/:customerId/activities', (req, res) => {
     console.error('[Messages] Failed to create notifications:', e.message);
   }
 
+  // 清除该客户对当前用户的活跃催促
+  try {
+    db.prepare('UPDATE nudges SET is_active = 0, cleared_at = ? WHERE customer_id = ? AND nudged_user_id = ? AND is_active = 1')
+      .run(nowCN(), req.params.customerId, req.user.id);
+  } catch (e) {
+    console.error('[Nudges] Failed to clear nudges:', e.message);
+  }
+
   res.status(201).json(activity);
 });
 

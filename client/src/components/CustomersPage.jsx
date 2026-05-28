@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
-import { useStore } from '../store';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useStore, useAuth } from '../store';
+import { getNudges, createNudge } from '../api';
 import { PIPELINE_STAGES } from '../constants';
 import CustomerSidebar from './CustomerSidebar';
 import Badge from './Badge';
@@ -20,11 +21,29 @@ const COLUMNS = [
 
 export default function CustomersPage() {
   const store = useStore();
+  const { user } = useAuth();
   const { filteredCustomers, team, searchTerm, setSearchTerm } = store;
 
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [sortKey, setSortKey] = useState('updated_at');
   const [sortDir, setSortDir] = useState('desc');
+  const [nudgedSet, setNudgedSet] = useState(new Set());
+
+  useEffect(() => {
+    getNudges()
+      .then(nudges => setNudgedSet(new Set(nudges.map(n => n.customer_id))))
+      .catch(console.error);
+  }, []);
+
+  const handleNudge = async (e, customerId) => {
+    e.stopPropagation();
+    try {
+      await createNudge(customerId);
+      setNudgedSet(prev => new Set([...prev, customerId]));
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const handleSort = (key) => {
     if (sortKey === key) {
@@ -148,7 +167,22 @@ export default function CustomersPage() {
                   ) : '-'}
                 </td>
                 <td className="px-4 py-3 text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                  {getAssigneeName(customer.assigned_to)}
+                  <span className="inline-flex items-center gap-2">
+                    {getAssigneeName(customer.assigned_to)}
+                    {customer.assigned_to && customer.assigned_to !== user?.id && (
+                      <button
+                        onClick={(e) => !nudgedSet.has(customer.id) && handleNudge(e, customer.id)}
+                        disabled={nudgedSet.has(customer.id)}
+                        className={`px-2 py-0.5 text-xs rounded font-medium transition-colors ${
+                          nudgedSet.has(customer.id)
+                            ? 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500 cursor-not-allowed'
+                            : 'bg-orange-50 text-orange-600 border border-orange-200 hover:bg-orange-100 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-700'
+                        }`}
+                      >
+                        {nudgedSet.has(customer.id) ? '已催促' : '催促'}
+                      </button>
+                    )}
+                  </span>
                 </td>
                 <td className="px-4 py-3 text-gray-600 dark:text-gray-400 whitespace-nowrap">
                   {customer.expected_close_date ? customer.expected_close_date.slice(0, 10) : '-'}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { getStandupData } from '../api';
+import { getStandupData, getNudges, createNudge } from '../api';
 import { ACTIVITY_TYPES, PIPELINE_STAGES } from '../constants';
+import { useAuth } from '../store';
 import StatCard from './StatCard';
 import Badge from './Badge';
 
@@ -16,11 +17,33 @@ const stageBadgeColor = (statusId) => {
 
 const DAY_OPTIONS = [2, 3, 5, 7, 14, 30];
 
+function NudgeButton({ customerId, assignedTo, nudgedSet, onNudge, currentUserId }) {
+  if (!assignedTo || assignedTo === currentUserId) return null;
+
+  const isNudged = nudgedSet.has(customerId);
+
+  return (
+    <button
+      onClick={() => !isNudged && onNudge(customerId)}
+      disabled={isNudged}
+      className={`px-2 py-1 text-xs rounded-md font-medium transition-colors ${
+        isNudged
+          ? 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500 cursor-not-allowed'
+          : 'bg-orange-50 text-orange-600 border border-orange-200 hover:bg-orange-100 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-700 dark:hover:bg-orange-900/40'
+      }`}
+    >
+      {isNudged ? '已催促' : '催促'}
+    </button>
+  );
+}
+
 export default function StandupBoard() {
+  const { user } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('byCustomer');
   const [days, setDays] = useState(2);
+  const [nudgedSet, setNudgedSet] = useState(new Set());
 
   useEffect(() => {
     setLoading(true);
@@ -29,6 +52,21 @@ export default function StandupBoard() {
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [days]);
+
+  useEffect(() => {
+    getNudges()
+      .then(nudges => setNudgedSet(new Set(nudges.map(n => n.customer_id))))
+      .catch(console.error);
+  }, []);
+
+  const handleNudge = async (customerId) => {
+    try {
+      await createNudge(customerId);
+      setNudgedSet(prev => new Set([...prev, customerId]));
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const { byPerson, byCustomer, inactiveMembers, uniqueCustomerCount, activeCount } = useMemo(() => {
     if (!data) return { byPerson: [], byCustomer: [], inactiveMembers: [], uniqueCustomerCount: 0, activeCount: 0 };
@@ -46,7 +84,10 @@ export default function StandupBoard() {
       personMap.get(a.created_by).activities.push(a);
 
       if (!customerMap.has(a.customer_id)) {
-        customerMap.set(a.customer_id, { id: a.customer_id, name: a.customer_name, status: a.customer_status, activities: [] });
+        customerMap.set(a.customer_id, {
+          id: a.customer_id, name: a.customer_name, status: a.customer_status,
+          assigned_to: a.assigned_to, assigned_name: a.assigned_name, activities: []
+        });
       }
       customerMap.get(a.customer_id).activities.push(a);
     }
@@ -176,6 +217,16 @@ export default function StandupBoard() {
                     <h3 className="text-base font-semibold text-gray-900 dark:text-white">{customer.name}</h3>
                     <div className="flex items-center gap-2 mt-1">
                       {stage && <Badge color={stageBadgeColor(customer.status)}>{stage.name}</Badge>}
+                      {customer.assigned_name && (
+                        <span className="text-xs text-gray-500 dark:text-gray-400">{customer.assigned_name}</span>
+                      )}
+                      <NudgeButton
+                        customerId={customer.id}
+                        assignedTo={customer.assigned_to}
+                        nudgedSet={nudgedSet}
+                        onNudge={handleNudge}
+                        currentUserId={user?.id}
+                      />
                     </div>
                   </div>
                   <Badge color="blue">{customer.activities.length} 条跟进</Badge>
@@ -206,7 +257,7 @@ export default function StandupBoard() {
         </div>
       )}
 
-      {/* Stat Cards — moved to bottom */}
+      {/* Stat Cards — bottom */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="跟进总数" value={data.activities.length} icon="📋" sub={`最近${days}天`} />
         <StatCard label="活跃成员" value={activeCount} icon="✅" sub={`共${data.users.length}人`} />
