@@ -68,6 +68,26 @@ export default function PipelineCard({ customer, onClick }) {
         )}
       </div>
 
+      {/* Payment progress for won deals */}
+      {customer.status === 'won' && customer.amount > 0 && (
+        <div className="mt-2">
+          <div className="flex justify-between text-xs mb-0.5">
+            <span className="text-emerald-600 dark:text-emerald-400">
+              已回 {((customer.received_amount || 0) / 10000).toFixed(1)}万
+            </span>
+            <span className="text-gray-400">
+              {((customer.received_amount || 0) / customer.amount * 100).toFixed(0)}%
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+            <div
+              className="bg-emerald-500 h-1.5 rounded-full transition-all"
+              style={{ width: `${Math.min(((customer.received_amount || 0) / customer.amount) * 100, 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Assignee + Collaborators */}
       {(assignee || collabs.length > 0) && (
         <div className="flex items-center gap-1 mt-2">

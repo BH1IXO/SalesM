@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useStore } from '../store';
-import { getActivities, createActivity, updateActivity, deleteActivity, getExpenses, createExpense, getCustomerCompetitors, createCustomerCompetitor, updateCustomer as apiUpdateCustomer, getCollaborators, addCollaborator, removeCollaborator } from '../api';
-import { PIPELINE_STAGES, ACTIVITY_TYPES, EXPENSE_TYPES, LOSS_REASONS } from '../constants';
+import { getActivities, createActivity, updateActivity, deleteActivity, getExpenses, createExpense, getPayments, createPayment, deletePayment, getCustomerCompetitors, createCustomerCompetitor, updateCustomer as apiUpdateCustomer, getCollaborators, addCollaborator, removeCollaborator } from '../api';
+import { PIPELINE_STAGES, ACTIVITY_TYPES, EXPENSE_TYPES, PAYMENT_METHODS, LOSS_REASONS } from '../constants';
 import Badge from './Badge';
 import StatCard from './StatCard';
 import Modal from './Modal';
@@ -236,6 +236,97 @@ function ExpenseForm({ customerId, onCreated }) {
 
 // ─── Competitor Form ───────────────────────────────────────────────────────
 
+function PaymentForm({ customerId, onCreated }) {
+  const [form, setForm] = useState({ amount: '', payment_date: new Date().toISOString().slice(0, 10), payment_method: 'transfer', reference_number: '', notes: '' });
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await createPayment(customerId, { ...form, amount: Number(form.amount) });
+      setForm({ amount: '', payment_date: new Date().toISOString().slice(0, 10), payment_method: 'transfer', reference_number: '', notes: '' });
+      onCreated();
+    } catch (err) {
+      console.error('Failed to create payment:', err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 mb-4 space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">回款金额 (元)</label>
+          <input
+            type="number"
+            value={form.amount}
+            onChange={(e) => setForm({ ...form, amount: e.target.value })}
+            placeholder="0"
+            required
+            min="0.01"
+            step="0.01"
+            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">到账日期</label>
+          <input
+            type="date"
+            value={form.payment_date}
+            onChange={(e) => setForm({ ...form, payment_date: e.target.value })}
+            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">付款方式</label>
+          <select
+            value={form.payment_method}
+            onChange={(e) => setForm({ ...form, payment_method: e.target.value })}
+            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {PAYMENT_METHODS.map((m) => (
+              <option key={m.id} value={m.id}>{m.name}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">参考单号</label>
+          <input
+            type="text"
+            value={form.reference_number}
+            onChange={(e) => setForm({ ...form, reference_number: e.target.value })}
+            placeholder="流水号/发票号"
+            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+      <div>
+        <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">备注</label>
+        <input
+          type="text"
+          value={form.notes}
+          onChange={(e) => setForm({ ...form, notes: e.target.value })}
+          placeholder="回款说明..."
+          className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+      <button
+        type="submit"
+        disabled={submitting || !form.amount}
+        className="w-full py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium rounded-lg transition"
+      >
+        {submitting ? '添加中...' : '添加回款'}
+      </button>
+    </form>
+  );
+}
+
+// ─── Competitor Form (original) ──────────────────────────────────────────
+
 function CompetitorForm({ customerId, onCreated }) {
   const { competitors } = useStore();
   const [form, setForm] = useState({ competitor_id: '', customer_feedback: '', our_advantage: '', our_disadvantage: '' });
@@ -390,6 +481,7 @@ const TABS = [
   { id: 'baseline', name: '打单基线' },
   { id: 'activities', name: '跟进记录' },
   { id: 'expenses', name: '费用记录' },
+  { id: 'payments', name: '回款记录' },
   { id: 'competitors', name: '竞品关联' },
 ];
 
@@ -405,9 +497,11 @@ export default function CustomerSidebar({ customer, onClose }) {
   const [editForm, setEditForm] = useState({});
   const [activities, setActivities] = useState([]);
   const [expenses, setExpenses] = useState([]);
+  const [payments, setPayments] = useState([]);
   const [custCompetitors, setCustCompetitors] = useState([]);
   const [showActivityForm, setShowActivityForm] = useState(false);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showCompetitorForm, setShowCompetitorForm] = useState(false);
   const [lossModalOpen, setLossModalOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState(null);
@@ -433,6 +527,16 @@ export default function CustomerSidebar({ customer, onClose }) {
       setExpenses(Array.isArray(data) ? data : data.expenses || []);
     } catch (err) {
       console.error('Failed to load expenses:', err);
+    }
+  }, [customer]);
+
+  const loadPayments = useCallback(async () => {
+    if (!customer) return;
+    try {
+      const data = await getPayments(customer.id);
+      setPayments(Array.isArray(data) ? data : data.payments || []);
+    } catch (err) {
+      console.error('Failed to load payments:', err);
     }
   }, [customer]);
 
@@ -481,24 +585,28 @@ export default function CustomerSidebar({ customer, onClose }) {
     setEditing(false);
     setShowActivityForm(false);
     setShowExpenseForm(false);
+    setShowPaymentForm(false);
     setShowCompetitorForm(false);
     setShowAddCollaborator(false);
     loadActivities();
     loadExpenses();
+    loadPayments();
     loadCustCompetitors();
     loadCollaborators();
-  }, [customer, loadActivities, loadExpenses, loadCustCompetitors, loadCollaborators]);
+  }, [customer, loadActivities, loadExpenses, loadPayments, loadCustCompetitors, loadCollaborators]);
 
   useEffect(() => {
     if (tab === 'activities') loadActivities();
     else if (tab === 'expenses') loadExpenses();
+    else if (tab === 'payments') loadPayments();
     else if (tab === 'competitors') loadCustCompetitors();
-  }, [tab, loadActivities, loadExpenses, loadCustCompetitors]);
+  }, [tab, loadActivities, loadExpenses, loadPayments, loadCustCompetitors]);
 
   if (!customer) return null;
 
   const assignee = team.find((m) => m.id === customer.assigned_to);
   const totalExpense = expenses.reduce((s, e) => s + (Number(e.amount) || 0), 0);
+  const totalPayment = payments.reduce((s, p) => s + (Number(p.amount) || 0), 0);
   const roi = totalExpense > 0 ? ((Number(customer.amount) || 0) / totalExpense).toFixed(1) : '-';
 
   // Edit mode form
@@ -604,6 +712,23 @@ export default function CustomerSidebar({ customer, onClose }) {
     await store.loadCustomers();
   };
 
+  const paymentCreated = async () => {
+    setShowPaymentForm(false);
+    await loadPayments();
+    await store.loadCustomers();
+  };
+
+  const handleDeletePayment = async (payment) => {
+    if (!confirm(`确定删除这笔 ¥${Number(payment.amount).toLocaleString()} 的回款记录？`)) return;
+    try {
+      await deletePayment(customer.id, payment.id);
+      await loadPayments();
+      await store.loadCustomers();
+    } catch (err) {
+      alert('删除失败');
+    }
+  };
+
   const competitorCreated = async () => {
     setShowCompetitorForm(false);
     await loadCustCompetitors();
@@ -658,8 +783,9 @@ export default function CustomerSidebar({ customer, onClose }) {
           {tab === 'info' && (
             <div>
               {/* Stat cards */}
-              <div className="grid grid-cols-3 gap-3 mb-5">
+              <div className="grid grid-cols-2 gap-3 mb-5">
                 <StatCard label="商机金额" value={`${((customer.amount || 0) / 10000).toFixed(1)}万`} icon="💰" />
+                <StatCard label="已回款" value={`${(totalPayment / 10000).toFixed(1)}万`} icon="💵" />
                 <StatCard label="总费用" value={`${(totalExpense / 10000).toFixed(1)}万`} icon="💳" />
                 <StatCard label="ROI" value={`${roi}x`} icon="📈" />
               </div>
@@ -975,6 +1101,84 @@ export default function CustomerSidebar({ customer, onClose }) {
                 })}
                 {expenses.length === 0 && (
                   <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">暂无费用记录</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── Tab: Payments ── */}
+          {tab === 'payments' && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  onClick={() => setShowPaymentForm(!showPaymentForm)}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition flex items-center gap-1"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  添加回款
+                </button>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  已收: <span className="text-emerald-600 dark:text-emerald-400">¥{totalPayment.toLocaleString()}</span>
+                </span>
+              </div>
+
+              {/* Progress bar */}
+              {customer.amount > 0 && (
+                <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    <span>回款进度</span>
+                    <span>{customer.amount > 0 ? ((totalPayment / customer.amount) * 100).toFixed(1) : 0}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div
+                      className="bg-emerald-500 h-2 rounded-full transition-all"
+                      style={{ width: `${Math.min((totalPayment / customer.amount) * 100, 100)}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-400 mt-1">
+                    <span>已收 ¥{totalPayment.toLocaleString()}</span>
+                    <span>总额 ¥{Number(customer.amount).toLocaleString()}</span>
+                  </div>
+                </div>
+              )}
+
+              {showPaymentForm && <PaymentForm customerId={customer.id} onCreated={paymentCreated} />}
+              <div className="space-y-3">
+                {payments.map((p) => {
+                  const methodObj = PAYMENT_METHODS.find((m) => m.id === p.payment_method);
+                  return (
+                    <div key={p.id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg group">
+                      <div className="text-xl flex-shrink-0">💵</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">{methodObj?.name || p.payment_method || '回款'}</span>
+                          <span className="text-xs text-gray-400 dark:text-gray-500">{p.payment_date ? p.payment_date.slice(0, 10) : ''}</span>
+                        </div>
+                        {p.reference_number && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">单号: {p.reference_number}</p>}
+                        {p.notes && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{p.notes}</p>}
+                        {p.creator_name && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">由 {p.creator_name}</p>}
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                          +¥{Number(p.amount).toLocaleString()}
+                        </span>
+                        <button
+                          onClick={() => handleDeletePayment(p)}
+                          className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="删除"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+                {payments.length === 0 && (
+                  <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">暂无回款记录</p>
                 )}
               </div>
             </div>

@@ -13,13 +13,15 @@ router.get('/overview', (req, res) => {
   const totalPipeline = db.prepare("SELECT COALESCE(SUM(amount),0) as s FROM customers WHERE status NOT IN ('won','lost')").get().s;
   const wonAmount = db.prepare("SELECT COALESCE(SUM(amount),0) as s FROM customers WHERE status = 'won'").get().s;
   const totalExpenses = db.prepare('SELECT COALESCE(SUM(amount),0) as s FROM expenses').get().s;
+  const totalReceived = db.prepare('SELECT COALESCE(SUM(amount),0) as s FROM payments').get().s;
   const avgDealSize = db.prepare("SELECT COALESCE(AVG(amount),0) as a FROM customers WHERE status = 'won'").get().a;
   const activityBreakdown = db.prepare('SELECT type, COUNT(*) as count FROM activities GROUP BY type ORDER BY count DESC').all();
 
   res.json({
     totalCustomers, activeCustomers, wonCustomers, lostCustomers,
-    totalPipeline, wonAmount, totalExpenses, avgDealSize,
+    totalPipeline, wonAmount, totalExpenses, totalReceived, avgDealSize,
     winRate: totalCustomers > 0 ? ((wonCustomers / (wonCustomers + lostCustomers)) * 100 || 0).toFixed(1) : 0,
+    collectionRate: wonAmount > 0 ? ((totalReceived / wonAmount) * 100).toFixed(1) : 0,
     activityBreakdown,
   });
 });
@@ -48,7 +50,8 @@ router.get('/performance', (req, res) => {
       COALESCE(SUM(CASE WHEN c.status = 'won' THEN c.amount ELSE 0 END), 0) as won_amount,
       COALESCE(SUM(CASE WHEN c.status NOT IN ('won','lost') THEN c.amount ELSE 0 END), 0) as pipeline_amount,
       (SELECT COUNT(*) FROM activities a WHERE a.created_by = u.id) as activity_count,
-      (SELECT COALESCE(SUM(e.amount),0) FROM expenses e WHERE e.created_by = u.id) as expense_total
+      (SELECT COALESCE(SUM(e.amount),0) FROM expenses e WHERE e.created_by = u.id) as expense_total,
+      COALESCE((SELECT SUM(p.amount) FROM payments p JOIN customers pc ON p.customer_id = pc.id WHERE pc.assigned_to = u.id), 0) as received_amount
     FROM users u
     LEFT JOIN customers c ON c.assigned_to = u.id
     WHERE u.active = 1

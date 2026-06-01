@@ -30,3 +30,10 @@ export const EXPENSE_TYPES = [
 ];
 
 export const LOSS_REASONS = ['价格因素', '产品功能不足', '竞品优势', '客户内部原因', '预算取消', '决策周期过长', '其他'];
+
+export const PAYMENT_METHODS = [
+  { id: 'transfer', name: '银行转账' },
+  { id: 'cash', name: '现金' },
+  { id: 'check', name: '支票' },
+  { id: 'other', name: '其他' },
+];

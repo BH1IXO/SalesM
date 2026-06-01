@@ -11,18 +11,18 @@ router.get('/', (req, res) => {
   const db = getDb();
   const { status, assigned_to, priority, search } = req.query;
 
-  let sql = 'SELECT * FROM customers WHERE 1=1';
+  let sql = 'SELECT c.*, COALESCE((SELECT SUM(p.amount) FROM payments p WHERE p.customer_id = c.id), 0) as received_amount FROM customers c WHERE 1=1';
   const params = [];
 
-  if (status) { sql += ' AND status = ?'; params.push(status); }
-  if (assigned_to) { sql += ' AND assigned_to = ?'; params.push(assigned_to); }
-  if (priority) { sql += ' AND priority = ?'; params.push(priority); }
+  if (status) { sql += ' AND c.status = ?'; params.push(status); }
+  if (assigned_to) { sql += ' AND c.assigned_to = ?'; params.push(assigned_to); }
+  if (priority) { sql += ' AND c.priority = ?'; params.push(priority); }
   if (search) {
-    sql += ' AND (name LIKE ? OR contact LIKE ?)';
+    sql += ' AND (c.name LIKE ? OR c.contact LIKE ?)';
     params.push(`%${search}%`, `%${search}%`);
   }
 
-  sql += ' ORDER BY updated_at DESC';
+  sql += ' ORDER BY c.updated_at DESC';
   const customers = db.prepare(sql).all(...params);
   res.json(customers);
 });

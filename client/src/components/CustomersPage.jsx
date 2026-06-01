@@ -13,6 +13,7 @@ const COLUMNS = [
   { key: 'industry', label: '行业' },
   { key: 'status', label: '阶段' },
   { key: 'amount', label: '商机金额' },
+  { key: 'received_amount', label: '已回款' },
   { key: 'priority', label: '优先级' },
   { key: 'assigned_to', label: '负责人' },
   { key: 'expected_close_date', label: '预计成交' },
@@ -61,7 +62,7 @@ export default function CustomersPage() {
       let vb = b[sortKey];
 
       // Handle numbers
-      if (sortKey === 'amount') {
+      if (sortKey === 'amount' || sortKey === 'received_amount') {
         va = Number(va) || 0;
         vb = Number(vb) || 0;
         return sortDir === 'asc' ? va - vb : vb - va;
@@ -160,6 +161,11 @@ export default function CustomersPage() {
                 </td>
                 <td className="px-4 py-3 text-gray-900 dark:text-white whitespace-nowrap">
                   {customer.amount ? `${(Number(customer.amount) / 10000).toFixed(1)}万` : '-'}
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap">
+                  {customer.received_amount ? (
+                    <span className="text-emerald-600 dark:text-emerald-400">{(Number(customer.received_amount) / 10000).toFixed(1)}万</span>
+                  ) : '-'}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap">
                   {customer.priority ? (

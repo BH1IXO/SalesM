@@ -51,6 +51,8 @@ export default function ReportsPage() {
   const wonAmount = overview?.wonAmount || 0;
   const winRate = overview?.winRate || 0;
   const totalExpenses = overview?.totalExpenses || 0;
+  const totalReceived = overview?.totalReceived || 0;
+  const collectionRate = overview?.collectionRate || 0;
 
   // Prepare pipeline chart data
   const pipelineChartData = pipeline.map((item) => {
@@ -74,7 +76,7 @@ export default function ReportsPage() {
   return (
     <div className="space-y-6">
       {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard
           label="管道总额"
           value={`${(pipelineTotal / 10000).toFixed(1)}万`}
@@ -89,6 +91,12 @@ export default function ReportsPage() {
           sub="已成交"
         />
         <StatCard
+          label="已回款"
+          value={`${(totalReceived / 10000).toFixed(1)}万`}
+          icon="💵"
+          sub={`回款率 ${collectionRate}%`}
+        />
+        <StatCard
           label="赢单率"
           value={`${winRate}%`}
           icon="📊"
@@ -100,6 +108,12 @@ export default function ReportsPage() {
           value={`${(totalExpenses / 10000).toFixed(1)}万`}
           icon="💳"
           sub="累计支出"
+        />
+        <StatCard
+          label="待回款"
+          value={`${(Math.max(wonAmount - totalReceived, 0) / 10000).toFixed(1)}万`}
+          icon="📋"
+          sub="尚未收回"
         />
       </div>
 
@@ -175,6 +189,7 @@ export default function ReportsPage() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">排名</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">销售人员</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">赢单金额</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">已回款</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">管道金额</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">活动数</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">客户数</th>
@@ -199,6 +214,9 @@ export default function ReportsPage() {
                       <td className="px-4 py-3 text-gray-900 dark:text-white font-medium">{p.name || '-'}</td>
                       <td className="px-4 py-3 text-green-600 dark:text-green-400 font-medium">
                         {((p.won_amount || 0) / 10000).toFixed(1)}万
+                      </td>
+                      <td className="px-4 py-3 text-emerald-600 dark:text-emerald-400">
+                        {((p.received_amount || 0) / 10000).toFixed(1)}万
                       </td>
                       <td className="px-4 py-3 text-blue-600 dark:text-blue-400">
                         {((p.pipeline_amount || 0) / 10000).toFixed(1)}万

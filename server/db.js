@@ -52,6 +52,23 @@ function getDb() {
       db.exec("CREATE INDEX IF NOT EXISTS idx_logs_created ON operation_logs(created_at)");
     }
 
+    // Ensure payments table exists
+    const paymentsTable = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='payments'").get();
+    if (!paymentsTable) {
+      db.exec(`CREATE TABLE IF NOT EXISTS payments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+        amount REAL NOT NULL,
+        payment_date TEXT NOT NULL,
+        payment_method TEXT DEFAULT '',
+        reference_number TEXT DEFAULT '',
+        notes TEXT DEFAULT '',
+        created_by INTEGER REFERENCES users(id),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`);
+      db.exec("CREATE INDEX IF NOT EXISTS idx_payments_customer ON payments(customer_id)");
+    }
+
     console.log(`[DB] Database initialized at ${DB_PATH}`);
   }
   return db;

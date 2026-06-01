@@ -186,3 +186,17 @@ CREATE TABLE IF NOT EXISTS competitor_files (
 );
 
 CREATE INDEX IF NOT EXISTS idx_competitor_files ON competitor_files(competitor_id);
+
+CREATE TABLE IF NOT EXISTS payments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+  amount REAL NOT NULL,
+  payment_date TEXT NOT NULL,
+  payment_method TEXT DEFAULT '',
+  reference_number TEXT DEFAULT '',
+  notes TEXT DEFAULT '',
+  created_by INTEGER REFERENCES users(id),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_payments_customer ON payments(customer_id);

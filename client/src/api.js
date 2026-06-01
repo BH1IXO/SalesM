@@ -105,6 +105,22 @@ export const createExpense = async (customerId, expenseData) => {
   return data;
 };
 
+// Payments
+export const getPayments = async (customerId) => {
+  const { data } = await api.get(`/customers/${customerId}/payments`);
+  return data;
+};
+
+export const createPayment = async (customerId, paymentData) => {
+  const { data } = await api.post(`/customers/${customerId}/payments`, paymentData);
+  return data;
+};
+
+export const deletePayment = async (customerId, paymentId) => {
+  const { data } = await api.delete(`/customers/${customerId}/payments/${paymentId}`);
+  return data;
+};
+
 // Competitors
 export const getCompetitors = async () => {
   const { data } = await api.get('/competitors');

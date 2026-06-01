@@ -18,6 +18,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/customers', authMiddleware, require('./routes/customers'));
 app.use('/api/customers', authMiddleware, require('./routes/activities'));
 app.use('/api/customers', authMiddleware, require('./routes/expenses'));
+app.use('/api/customers', authMiddleware, require('./routes/payments'));
 app.use('/api/competitors', authMiddleware, require('./routes/competitors'));
 app.use('/api/team', authMiddleware, require('./routes/team'));
 app.use('/api/reports', authMiddleware, require('./routes/reports'));
@@ -40,6 +41,7 @@ app.get('/api/data/export', authMiddleware, (req, res) => {
     documents: db.prepare('SELECT * FROM documents').all(),
     document_categories: db.prepare('SELECT * FROM document_categories').all(),
     customer_collaborators: db.prepare('SELECT * FROM customer_collaborators').all(),
+    payments: db.prepare('SELECT * FROM payments').all(),
     exportDate: new Date().toISOString(),
   };
   res.json(data);
@@ -47,12 +49,13 @@ app.get('/api/data/export', authMiddleware, (req, res) => {
 
 app.post('/api/data/import', authMiddleware, (req, res) => {
   const db = getDb();
-  const { customers, activities, expenses, competitors, customer_competitors, documents, document_categories } = req.body;
+  const { customers, activities, expenses, competitors, customer_competitors, documents, document_categories, payments } = req.body;
 
   try {
     const importAll = db.transaction(() => {
       if (customers) {
         db.prepare('DELETE FROM customer_competitors').run();
+        db.prepare('DELETE FROM payments').run();
         db.prepare('DELETE FROM expenses').run();
         db.prepare('DELETE FROM activities').run();
         db.prepare('DELETE FROM customers').run();
@@ -92,6 +95,11 @@ app.post('/api/data/import', authMiddleware, (req, res) => {
         db.prepare('DELETE FROM documents').run();
         const stmt = db.prepare('INSERT INTO documents (customer_id, category_id, filename, original_name, size, mime_type, notes, uploaded_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
         for (const d of documents) stmt.run(d.customer_id, d.category_id, d.filename, d.original_name, d.size, d.mime_type, d.notes, d.uploaded_by, d.created_at);
+      }
+      if (payments) {
+        db.prepare('DELETE FROM payments').run();
+        const stmt = db.prepare('INSERT INTO payments (customer_id, amount, payment_date, payment_method, reference_number, notes, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)');
+        for (const p of payments) stmt.run(p.customer_id, p.amount, p.payment_date, p.payment_method, p.reference_number, p.notes, p.created_by);
       }
     });
     importAll();
