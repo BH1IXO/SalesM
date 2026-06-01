@@ -12,8 +12,10 @@ router.get('/', (req, res) => {
 
   const activities = db.prepare(`
     SELECT a.id, a.customer_id, a.type, a.description, a.date, a.next_follow_up,
-           a.created_by, u.name AS creator_name, u.team AS creator_team,
+           a.created_by, a.created_at, u.name AS creator_name, u.team AS creator_team,
            c.name AS customer_name, c.status AS customer_status,
+           c.amount AS customer_amount,
+           COALESCE((SELECT SUM(p.amount) FROM payments p WHERE p.customer_id = c.id), 0) AS customer_received,
            c.assigned_to, au.name AS assigned_name
     FROM activities a
     LEFT JOIN users u ON a.created_by = u.id

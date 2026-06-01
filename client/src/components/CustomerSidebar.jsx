@@ -1005,7 +1005,7 @@ export default function CustomerSidebar({ customer, onClose }) {
                           <div className="flex items-start justify-between">
                             <div>
                               <span className="text-sm font-semibold text-gray-900 dark:text-white">{typeObj?.name || a.type}</span>
-                              <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">{a.date ? a.date.slice(0, 10) : ''}</span>
+                              <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">{a.created_at ? a.created_at.slice(0, 19).replace('T', ' ') : (a.date ? a.date.slice(0, 10) : '')}</span>
                             </div>
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                               <button

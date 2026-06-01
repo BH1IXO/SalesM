@@ -8,7 +8,7 @@ const router = express.Router();
 router.get('/:customerId/activities', (req, res) => {
   const db = getDb();
   const activities = db.prepare(
-    'SELECT a.*, u.name as creator_name FROM activities a LEFT JOIN users u ON a.created_by = u.id WHERE a.customer_id = ? ORDER BY a.date DESC'
+    'SELECT a.*, u.name as creator_name FROM activities a LEFT JOIN users u ON a.created_by = u.id WHERE a.customer_id = ? ORDER BY a.created_at DESC'
   ).all(req.params.customerId);
   res.json(activities);
 });
@@ -19,7 +19,7 @@ router.post('/:customerId/activities', (req, res) => {
 
   if (!type) return res.status(400).json({ error: '活动类型不能为空' });
 
-  const now = date || todayCN();
+  const now = date || nowCN();
   const result = db.prepare(
     'INSERT INTO activities (customer_id, type, description, date, created_by, next_follow_up) VALUES (?, ?, ?, ?, ?, ?)'
   ).run(req.params.customerId, type, description || '', now, req.user.id, next_follow_up || null);

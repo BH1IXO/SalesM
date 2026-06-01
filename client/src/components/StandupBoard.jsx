@@ -86,7 +86,9 @@ export default function StandupBoard() {
       if (!customerMap.has(a.customer_id)) {
         customerMap.set(a.customer_id, {
           id: a.customer_id, name: a.customer_name, status: a.customer_status,
-          assigned_to: a.assigned_to, assigned_name: a.assigned_name, activities: []
+          assigned_to: a.assigned_to, assigned_name: a.assigned_name,
+          amount: a.customer_amount || 0, received: a.customer_received || 0,
+          activities: []
         });
       }
       customerMap.get(a.customer_id).activities.push(a);
@@ -192,10 +194,16 @@ export default function StandupBoard() {
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-sm font-medium text-gray-900 dark:text-white">{a.customer_name}</span>
                           {stage && <Badge color={stageBadgeColor(a.customer_status)}>{stage.name}</Badge>}
+                          {(a.customer_amount > 0 || a.customer_received > 0) && (
+                            <span className="text-xs text-gray-400">
+                              {(a.customer_amount / 10000).toFixed(1)}万
+                              {a.customer_received > 0 && <span className="text-emerald-500"> / 回{(a.customer_received / 10000).toFixed(1)}万</span>}
+                            </span>
+                          )}
                         </div>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">{at.name}</p>
                         {a.description && (
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{a.description}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{a.description}</p>
                         )}
                         <p className="text-xs text-gray-400 mt-1">{a.date}</p>
                       </div>
@@ -228,6 +236,13 @@ export default function StandupBoard() {
                         currentUserId={user?.id}
                       />
                     </div>
+                    {(customer.amount > 0 || customer.received > 0) && (
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        <span>合同 <span className="text-blue-600 dark:text-blue-400 font-medium">{(customer.amount / 10000).toFixed(1)}万</span></span>
+                        <span className="mx-1.5">|</span>
+                        <span>已回 <span className="text-emerald-600 dark:text-emerald-400 font-medium">{(customer.received / 10000).toFixed(1)}万</span></span>
+                      </div>
+                    )}
                   </div>
                   <Badge color="blue">{customer.activities.length} 条跟进</Badge>
                 </div>
@@ -243,7 +258,7 @@ export default function StandupBoard() {
                             <span className="text-xs text-gray-500 dark:text-gray-400">{at.name}</span>
                           </div>
                           {a.description && (
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{a.description}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{a.description}</p>
                           )}
                           <p className="text-xs text-gray-400 mt-1">{a.date}</p>
                         </div>
