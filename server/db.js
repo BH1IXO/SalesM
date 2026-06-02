@@ -69,6 +69,17 @@ function getDb() {
       db.exec("CREATE INDEX IF NOT EXISTS idx_payments_customer ON payments(customer_id)");
     }
 
+    // Migrate activities.date to UTC+8 full datetime
+    const sampleDate = db.prepare("SELECT date FROM activities WHERE length(date) <= 10 LIMIT 1").get();
+    if (sampleDate) {
+      db.exec(`
+        UPDATE activities
+        SET date = strftime('%Y-%m-%d %H:%M:%S', datetime(created_at, '+8 hours'))
+        WHERE length(date) <= 10 AND created_at IS NOT NULL
+      `);
+      console.log('[DB] Migrated activities.date to UTC+8 datetime');
+    }
+
     console.log(`[DB] Database initialized at ${DB_PATH}`);
   }
   return db;
