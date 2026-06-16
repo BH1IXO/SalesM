@@ -37,3 +37,8 @@ export const PAYMENT_METHODS = [
   { id: 'check', name: '支票' },
   { id: 'other', name: '其他' },
 ];
+
+export const COMMISSION_STATUS = [
+  { id: 'pending', name: '待支付' },
+  { id: 'paid', name: '已支付' },
+];

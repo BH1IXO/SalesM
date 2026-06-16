@@ -95,6 +95,7 @@ export function StoreProvider({ children }) {
   const [customers, setCustomers] = useState([]);
   const [team, setTeam] = useState([]);
   const [competitors, setCompetitors] = useState([]);
+  const [channels, setChannels] = useState([]);
   const [loading, setLoading] = useState(false);
 
   // UI state
@@ -152,6 +153,15 @@ export function StoreProvider({ children }) {
     }
   }, []);
 
+  const loadChannels = useCallback(async () => {
+    try {
+      const data = await apiClient.getChannels();
+      setChannels(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Failed to load channels:', err);
+    }
+  }, []);
+
   const loadMessages = useCallback(async () => {
     try {
       const data = await apiClient.getMessages();
@@ -188,9 +198,10 @@ export function StoreProvider({ children }) {
       loadCustomers();
       loadTeam();
       loadCompetitors();
+      loadChannels();
       loadMessages();
     }
-  }, [isAuthenticated, loadCustomers, loadTeam, loadCompetitors, loadMessages]);
+  }, [isAuthenticated, loadCustomers, loadTeam, loadCompetitors, loadChannels, loadMessages]);
 
   // Poll messages every 30 seconds
   useEffect(() => {
@@ -313,6 +324,7 @@ export function StoreProvider({ children }) {
     customers,
     team,
     competitors,
+    channels,
     loading,
     filteredCustomers,
 
@@ -340,6 +352,9 @@ export function StoreProvider({ children }) {
     loadCompetitors,
     addCompetitor,
 
+    // Channels
+    loadChannels,
+
     // Import/Export
     exportData: doExportData,
     importData: doImportData,
@@ -352,11 +367,12 @@ export function StoreProvider({ children }) {
     markRead,
     markAllRead,
   }), [
-    customers, team, competitors, loading, filteredCustomers,
+    customers, team, competitors, channels, loading, filteredCustomers,
     searchTerm, filterAssignee, filterPriority,
     darkMode,
     loadCustomers, addCustomer, updateCustomer, removeCustomer, moveCustomer,
     loadTeam, loadCompetitors, addCompetitor,
+    loadChannels,
     doExportData, doImportData, exportCSV,
     messages, unreadCount, loadMessages, markRead, markAllRead,
   ]);

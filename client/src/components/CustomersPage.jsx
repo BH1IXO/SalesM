@@ -11,6 +11,7 @@ const PRIORITY_COLOR = { high: 'red', medium: 'orange', low: 'blue' };
 const COLUMNS = [
   { key: 'name', label: '客户名称' },
   { key: 'industry', label: '行业' },
+  { key: 'channel_name', label: '渠道' },
   { key: 'status', label: '阶段' },
   { key: 'amount', label: '商机金额' },
   { key: 'received_amount', label: '已回款' },
@@ -155,6 +156,9 @@ export default function CustomersPage() {
                 </td>
                 <td className="px-4 py-3 text-gray-600 dark:text-gray-400 whitespace-nowrap">
                   {customer.industry || '-'}
+                </td>
+                <td className="px-4 py-3 text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                  {customer.channel_name || '-'}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap">
                   <Badge color={getStageColor(customer.status)}>{getStageName(customer.status)}</Badge>

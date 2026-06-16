@@ -360,3 +360,49 @@ export const markAllMessagesRead = async () => {
   const { data } = await api.patch('/messages/read-all');
   return data;
 };
+
+// Channels
+export const getChannels = async () => {
+  const { data } = await api.get('/channels');
+  return data;
+};
+
+export const getChannel = async (id) => {
+  const { data } = await api.get(`/channels/${id}`);
+  return data;
+};
+
+export const createChannel = async (channelData) => {
+  const { data } = await api.post('/channels', channelData);
+  return data;
+};
+
+export const updateChannel = async (id, channelData) => {
+  const { data } = await api.put(`/channels/${id}`, channelData);
+  return data;
+};
+
+export const deleteChannel = async (id) => {
+  const { data } = await api.delete(`/channels/${id}`);
+  return data;
+};
+
+export const getChannelCustomers = async (channelId) => {
+  const { data } = await api.get(`/channels/${channelId}/customers`);
+  return data;
+};
+
+export const getChannelCommissions = async (channelId) => {
+  const { data } = await api.get(`/channels/${channelId}/commissions`);
+  return data;
+};
+
+export const createChannelCommission = async (channelId, commissionData) => {
+  const { data } = await api.post(`/channels/${channelId}/commissions`, commissionData);
+  return data;
+};
+
+export const deleteChannelCommission = async (channelId, commissionId) => {
+  const { data } = await api.delete(`/channels/${channelId}/commissions/${commissionId}`);
+  return data;
+};

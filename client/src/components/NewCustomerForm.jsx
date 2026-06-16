@@ -22,6 +22,8 @@ export default function NewCustomerForm({ open, onClose }) {
     expected_close_date: '',
     priority: 'medium',
     pain_points: '',
+    channel_id: '',
+    commission_rate: '',
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -46,6 +48,8 @@ export default function NewCustomerForm({ open, onClose }) {
         amount_months: form.amount_months ? Number(form.amount_months) : 1,
         budget: form.budget ? Number(form.budget) : 0,
         assigned_to: form.assigned_to ? Number(form.assigned_to) : null,
+        channel_id: form.channel_id ? Number(form.channel_id) : null,
+        commission_rate: form.commission_rate ? Number(form.commission_rate) : 0,
       };
       await store.addCustomer(payload);
       setForm({
@@ -64,6 +68,8 @@ export default function NewCustomerForm({ open, onClose }) {
         expected_close_date: '',
         priority: 'medium',
         pain_points: '',
+        channel_id: '',
+        commission_rate: '',
       });
       onClose();
     } catch (err) {
@@ -75,6 +81,16 @@ export default function NewCustomerForm({ open, onClose }) {
   };
 
   const salesTeam = store.team.filter((m) => m.role !== 'admin');
+  const activeChannels = store.channels.filter((ch) => ch.status === 'active');
+
+  const handleChannelChange = (channelId) => {
+    const ch = activeChannels.find((c) => c.id === Number(channelId));
+    setForm((prev) => ({
+      ...prev,
+      channel_id: channelId,
+      commission_rate: ch ? String(ch.commission_rate) : '',
+    }));
+  };
 
   return (
     <Modal open={open} onClose={onClose} title="新建客户" wide>
@@ -189,6 +205,38 @@ export default function NewCustomerForm({ open, onClose }) {
               ))}
             </select>
           </div>
+
+          {/* Channel */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">渠道来源</label>
+            <select
+              value={form.channel_id}
+              onChange={(e) => handleChannelChange(e.target.value)}
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">无渠道</option>
+              {activeChannels.map((ch) => (
+                <option key={ch.id} value={ch.id}>{ch.name}{ch.commission_rate ? ` (${ch.commission_rate}%)` : ''}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Commission Rate */}
+          {form.channel_id && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">居间费率 (%)</label>
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                max="100"
+                value={form.commission_rate}
+                onChange={(e) => handleChange('commission_rate', e.target.value)}
+                placeholder="使用渠道默认费率"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          )}
 
           {/* Amount breakdown */}
           <div className="col-span-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 space-y-3">

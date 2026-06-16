@@ -80,6 +80,14 @@ function getDb() {
       console.log('[DB] Migrated activities.date to UTC+8 datetime');
     }
 
+    // Migrate: add channel_id and commission_rate to customers
+    const custCols = db.prepare("PRAGMA table_info(customers)").all().map(c => c.name);
+    if (!custCols.includes('channel_id')) {
+      db.exec("ALTER TABLE customers ADD COLUMN channel_id INTEGER REFERENCES channels(id)");
+      db.exec("ALTER TABLE customers ADD COLUMN commission_rate REAL DEFAULT 0");
+      console.log('[DB] Added channel_id and commission_rate to customers');
+    }
+
     console.log(`[DB] Database initialized at ${DB_PATH}`);
   }
   return db;

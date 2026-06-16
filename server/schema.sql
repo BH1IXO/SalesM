@@ -200,3 +200,36 @@ CREATE TABLE IF NOT EXISTS payments (
 );
 
 CREATE INDEX IF NOT EXISTS idx_payments_customer ON payments(customer_id);
+
+CREATE TABLE IF NOT EXISTS channels (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  contact TEXT DEFAULT '',
+  phone TEXT DEFAULT '',
+  email TEXT DEFAULT '',
+  company TEXT DEFAULT '',
+  commission_rate REAL DEFAULT 0,
+  status TEXT DEFAULT 'active',
+  notes TEXT DEFAULT '',
+  created_by INTEGER REFERENCES users(id),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS channel_commissions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  channel_id INTEGER NOT NULL REFERENCES channels(id),
+  customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+  amount REAL NOT NULL,
+  commission_rate REAL NOT NULL,
+  status TEXT DEFAULT 'pending',
+  payment_date TEXT,
+  payment_method TEXT DEFAULT '',
+  reference_number TEXT DEFAULT '',
+  notes TEXT DEFAULT '',
+  created_by INTEGER REFERENCES users(id),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_commissions_channel ON channel_commissions(channel_id);
+CREATE INDEX IF NOT EXISTS idx_commissions_customer ON channel_commissions(customer_id);

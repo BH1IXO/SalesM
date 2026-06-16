@@ -20,6 +20,7 @@ app.use('/api/customers', authMiddleware, require('./routes/activities'));
 app.use('/api/customers', authMiddleware, require('./routes/expenses'));
 app.use('/api/customers', authMiddleware, require('./routes/payments'));
 app.use('/api/competitors', authMiddleware, require('./routes/competitors'));
+app.use('/api/channels', authMiddleware, require('./routes/channels'));
 app.use('/api/team', authMiddleware, require('./routes/team'));
 app.use('/api/reports', authMiddleware, require('./routes/reports'));
 app.use('/api/standup', authMiddleware, require('./routes/standup'));
@@ -42,6 +43,8 @@ app.get('/api/data/export', authMiddleware, (req, res) => {
     document_categories: db.prepare('SELECT * FROM document_categories').all(),
     customer_collaborators: db.prepare('SELECT * FROM customer_collaborators').all(),
     payments: db.prepare('SELECT * FROM payments').all(),
+    channels: db.prepare('SELECT * FROM channels').all(),
+    channel_commissions: db.prepare('SELECT * FROM channel_commissions').all(),
     exportDate: new Date().toISOString(),
   };
   res.json(data);
@@ -49,7 +52,7 @@ app.get('/api/data/export', authMiddleware, (req, res) => {
 
 app.post('/api/data/import', authMiddleware, (req, res) => {
   const db = getDb();
-  const { customers, activities, expenses, competitors, customer_competitors, documents, document_categories, payments } = req.body;
+  const { customers, activities, expenses, competitors, customer_competitors, documents, document_categories, payments, channels, channel_commissions } = req.body;
 
   try {
     const importAll = db.transaction(() => {
@@ -100,6 +103,17 @@ app.post('/api/data/import', authMiddleware, (req, res) => {
         db.prepare('DELETE FROM payments').run();
         const stmt = db.prepare('INSERT INTO payments (customer_id, amount, payment_date, payment_method, reference_number, notes, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)');
         for (const p of payments) stmt.run(p.customer_id, p.amount, p.payment_date, p.payment_method, p.reference_number, p.notes, p.created_by);
+      }
+      if (channels) {
+        db.prepare('DELETE FROM channel_commissions').run();
+        db.prepare('DELETE FROM channels').run();
+        const stmt = db.prepare('INSERT INTO channels (name, contact, phone, email, company, commission_rate, status, notes, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        for (const ch of channels) stmt.run(ch.name, ch.contact, ch.phone, ch.email, ch.company, ch.commission_rate, ch.status, ch.notes, ch.created_by, ch.created_at, ch.updated_at);
+      }
+      if (channel_commissions) {
+        db.prepare('DELETE FROM channel_commissions').run();
+        const stmt = db.prepare('INSERT INTO channel_commissions (channel_id, customer_id, amount, commission_rate, status, payment_date, payment_method, reference_number, notes, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        for (const cc of channel_commissions) stmt.run(cc.channel_id, cc.customer_id, cc.amount, cc.commission_rate, cc.status, cc.payment_date, cc.payment_method, cc.reference_number, cc.notes, cc.created_by, cc.created_at);
       }
     });
     importAll();

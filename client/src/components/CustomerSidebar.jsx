@@ -490,7 +490,7 @@ const PRIORITY_COLOR = { high: 'red', medium: 'orange', low: 'blue' };
 
 export default function CustomerSidebar({ customer, onClose }) {
   const store = useStore();
-  const { team, competitors } = store;
+  const { team, competitors, channels } = store;
 
   const [tab, setTab] = useState('info');
   const [editing, setEditing] = useState(false);
@@ -625,6 +625,8 @@ export default function CustomerSidebar({ customer, onClose }) {
       expected_close_date: customer.expected_close_date ? customer.expected_close_date.slice(0, 10) : '',
       priority: customer.priority || 'medium',
       assigned_to: customer.assigned_to || '',
+      channel_id: customer.channel_id || '',
+      commission_rate: customer.commission_rate || '',
     });
     setEditing(true);
   };
@@ -637,6 +639,8 @@ export default function CustomerSidebar({ customer, onClose }) {
         amount_monthly: Number(editForm.amount_monthly) || 0,
         amount_months: Number(editForm.amount_months) || 1,
         budget: Number(editForm.budget) || 0,
+        channel_id: editForm.channel_id ? Number(editForm.channel_id) : null,
+        commission_rate: Number(editForm.commission_rate) || 0,
       });
       setEditing(false);
     } catch (err) {
@@ -810,6 +814,8 @@ export default function CustomerSidebar({ customer, onClose }) {
                   <FieldRow label="预计成交" value={customer.expected_close_date ? customer.expected_close_date.slice(0, 10) : '-'} />
                   <FieldRow label="优先级" value={PRIORITY_LABEL[customer.priority] || '-'} />
                   <FieldRow label="负责人" value={assignee ? (assignee.name || assignee.username) : '-'} />
+                  <FieldRow label="渠道来源" value={customer.channel_name || (customer.channel_id ? channels.find(ch => ch.id === customer.channel_id)?.name : null) || '-'} />
+                  {customer.channel_id && <FieldRow label="居间费率" value={`${customer.commission_rate || (channels.find(ch => ch.id === customer.channel_id)?.commission_rate || 0)}%`} />}
 
                   {/* Collaborators */}
                   <div className="py-2 border-b border-gray-100 dark:border-gray-700">
@@ -939,6 +945,31 @@ export default function CustomerSidebar({ customer, onClose }) {
                       ))}
                     </select>
                   </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">渠道来源</label>
+                    <select
+                      value={editForm.channel_id || ''}
+                      onChange={(e) => {
+                        const chId = e.target.value;
+                        const ch = channels.find(c => c.id === Number(chId));
+                        setEditForm({ ...editForm, channel_id: chId ? Number(chId) : '', commission_rate: ch ? ch.commission_rate : '' });
+                      }}
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">无渠道</option>
+                      {channels.filter(ch => ch.status === 'active').map((ch) => (
+                        <option key={ch.id} value={ch.id}>{ch.name}{ch.commission_rate ? ` (${ch.commission_rate}%)` : ''}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {editForm.channel_id && (
+                    <div>
+                      <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">居间费率 (%)</label>
+                      <input type="number" step="0.1" min="0" max="100" value={editForm.commission_rate || ''}
+                        onChange={(e) => setEditForm({ ...editForm, commission_rate: e.target.value })}
+                        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                  )}
                   <div className="flex gap-3 pt-2">
                     <button onClick={saveEdit} className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition">保存</button>
                     <button onClick={() => setEditing(false)} className="flex-1 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition">取消</button>
