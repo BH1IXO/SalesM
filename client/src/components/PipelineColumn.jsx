@@ -37,7 +37,7 @@ export default function PipelineColumn({ stage, customers, onCardClick }) {
 
   return (
     <div
-      className={`flex-shrink-0 w-72 flex flex-col bg-gray-50 dark:bg-gray-900/50 rounded-xl border transition-colors ${
+      className={`flex-shrink-0 w-60 flex flex-col bg-gray-50 dark:bg-gray-900/50 rounded-xl border transition-colors ${
         dragOver
           ? 'border-blue-400 dark:border-blue-500 bg-blue-50/50 dark:bg-blue-900/20'
           : 'border-gray-200 dark:border-gray-700'
@@ -47,23 +47,23 @@ export default function PipelineColumn({ stage, customers, onCardClick }) {
       onDrop={handleDrop}
     >
       {/* Column header */}
-      <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center gap-2 mb-1">
-          <div className={`w-2.5 h-2.5 rounded-full ${stage.dotColor}`} />
-          <span className={`text-sm font-medium ${stage.textColor}`}>
+      <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-2 mb-0.5">
+          <div className={`w-2 h-2 rounded-full ${stage.dotColor}`} />
+          <span className={`text-xs font-medium ${stage.textColor}`}>
             {stage.name}
           </span>
-          <span className="ml-auto inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300">
+          <span className="ml-auto inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-200 dark:bg-gray-700 text-[10px] font-medium text-gray-600 dark:text-gray-300">
             {customers.length}
           </span>
         </div>
-        <div className="text-xs text-gray-500 dark:text-gray-400">
+        <div className="text-[11px] text-gray-500 dark:text-gray-400">
           {totalWan}万
         </div>
       </div>
 
       {/* Cards */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2 scrollbar-thin min-h-[120px]">
+      <div className="flex-1 overflow-y-auto p-2 space-y-1.5 scrollbar-thin min-h-[100px]">
         {customers.map((customer) => (
           <PipelineCard
             key={customer.id}
